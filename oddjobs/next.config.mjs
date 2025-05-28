@@ -2,17 +2,16 @@
 const nextConfig = {
     reactStrictMode: true,
     images: {
-      domains: ['https://qnpwynomeazsbhlenltx.supabase.co'],
+      domains: ['qnpwynomeazsbhlenltx.supabase.co'], // Removed https://
     },
-    // Required for Supabase WebSockets
     webpack: (config) => {
       config.externals.push({
         'utf-8-validate': 'commonjs utf-8-validate',
-        bufferutil: 'commonjs bufferutil'
-      })
-      return config
-    }
-  }
+        bufferutil: 'commonjs bufferutil',
+      });
+      return config;
+    },
+  };
   
-//   module.exports = nextConfig
-export default nextConfig;
+  export default nextConfig;
+  
