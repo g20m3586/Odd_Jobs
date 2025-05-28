@@ -1,4 +1,17 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
-
+const nextConfig = {
+    images: {
+      domains: ['https://qnpwynomeazsbhlenltx.supabase.co'],
+    },
+    // Required for Supabase WebSockets
+    webpack: (config) => {
+      config.externals.push({
+        'utf-8-validate': 'commonjs utf-8-validate',
+        bufferutil: 'commonjs bufferutil'
+      })
+      return config
+    }
+  }
+  
+  module.exports = nextConfig
 export default nextConfig;
