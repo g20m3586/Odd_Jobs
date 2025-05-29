@@ -1,8 +1,10 @@
-"use client"
+// "use client"
 
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link';
+
 
 export default async function JobDetailPage({ params }) {
   const { data: job, error } = await supabase
