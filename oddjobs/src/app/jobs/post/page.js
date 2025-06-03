@@ -19,7 +19,6 @@ export default function PostJobPage() {
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -41,16 +40,14 @@ export default function PostJobPage() {
 
       if (error) throw error
 
-      toast({
-        title: 'Job posted successfully!',
+      toast.success('Job posted successfully!', {
         description: 'Your job is now visible to freelancers.'
       })
+
       router.push('/jobs')
     } catch (error) {
-      toast({
-        title: 'Error posting job',
-        description: error.message,
-        variant: 'destructive'
+      toast.error('Error posting job', {
+        description: error.message
       })
     } finally {
       setLoading(false)
