@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,20 +18,22 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        
-        if (profile) {
-          setName(profile.name)
-          setEmail(profile.email)
-          setPhone(profile.phone)
-        }
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !user) return setError('User not found')
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) return setError(profileError.message)
+
+      if (profile) {
+        setName(profile.name)
+        setEmail(profile.email)
+        setPhone(profile.phone)
       }
     }
 
@@ -45,18 +47,18 @@ export default function ProfilePage() {
     setSuccess(false)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      const { error } = await supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) throw new Error('User not authenticated.')
+
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           name,
-          phone,
-          updated_at: new Date().toISOString(),
+          phone
         })
         .eq('id', user.id)
 
-      if (error) throw error
+      if (updateError) throw updateError
 
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)

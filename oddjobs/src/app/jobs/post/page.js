@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { toast } from '@/components/ui/sonner'
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';  // Note: directly from 'sonner' package
 
 export default function PostJobPage() {
   const [formData, setFormData] = useState({
@@ -56,7 +57,7 @@ export default function PostJobPage() {
 
   return (
     <div className="container py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Post a New Job</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Post a New Job</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="title">Job Title *</Label>

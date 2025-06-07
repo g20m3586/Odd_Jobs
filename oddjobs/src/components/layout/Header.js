@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { usePathname } from 'next/navigation'
-import {supabase} from '@/lib/supabase/client'
+import {supabase} from '@/lib/client'
 import { useEffect, useState } from 'react'
 
 export default function Header() {

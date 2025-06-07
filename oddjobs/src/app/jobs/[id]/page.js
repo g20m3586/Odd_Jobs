@@ -1,7 +1,7 @@
 // "use client"
 
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link';
 

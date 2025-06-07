@@ -19,6 +19,11 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
+  // Add this check to existing middleware
+  if (req.nextUrl.pathname.startsWith('/admin') && session?.user?.email !== 'admin@email.com') {
+  return NextResponse.redirect(new URL('/dashboard', req.url))
+}
+
   return res
 }
 

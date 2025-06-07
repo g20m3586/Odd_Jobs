@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import Link from 'next/link'
 import { Checkbox } from '@/components/ui/checkbox'
+import Link from 'next/link'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -18,44 +18,38 @@ export default function SignupPage() {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
 
   const handleSignup = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setSuccessMessage('')
 
     if (!termsAccepted) {
-      setError('You must accept the terms and conditions')
+      setError('You must accept the terms and conditions.')
       setLoading(false)
       return
     }
 
     try {
-      // First sign up the user
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Sign up the user
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name,
+            phone,
+            role
+          }
+        }
       })
 
       if (signUpError) throw signUpError
 
-      // Then add their profile data to the profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          { 
-            id: signUpData.user.id,
-            email,
-            name,
-            phone,
-            role 
-          },
-        ])
-
-      if (profileError) throw profileError
-
-      router.push('/dashboard/profile')
+      setSuccessMessage('Account created! Please check your email to confirm your account.')
     } catch (error) {
       setError(error.message)
     } finally {
@@ -76,8 +70,14 @@ export default function SignupPage() {
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4" role="alert">
           <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mt-4" role="alert">
+          ✅ {successMessage}
         </div>
       )}
 
@@ -100,7 +100,7 @@ export default function SignupPage() {
             <Input
               id="email"
               type="email"
-              placeholder="your@email.com"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -177,6 +177,10 @@ export default function SignupPage() {
           {loading ? 'Creating account...' : 'Create account'}
         </Button>
       </form>
+
+      <div className="mt-4 p-4 bg-blue-100 border border-blue-300 text-blue-700 rounded text-sm">
+        📩 Don’t forget: Please check your inbox for a verification email from Supabase to activate your account.
+      </div>
     </>
   )
 }
