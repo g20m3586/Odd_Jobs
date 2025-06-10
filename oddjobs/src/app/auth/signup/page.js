@@ -328,7 +328,7 @@ export default function SignupPage() {
       </CardContent>
 
       <CardFooter className="mt-4 p-4 bg-blue-100 border border-blue-300 text-blue-700 rounded text-sm">
-        📩 Don't forget: Please check your inbox for a verification email from Supabase to activate your account.
+        📩 Don`&#39t forget: Please check your inbox for a verification email from Supabase to activate your account.
       </CardFooter>
     </>
   )
