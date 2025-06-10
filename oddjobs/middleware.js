@@ -9,20 +9,32 @@ export async function middleware(req) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect to login if user is not authenticated
-  if (!user && !req.nextUrl.pathname.startsWith('/auth')) {
+  // Define protected routes
+  const protectedRoutes = [
+    '/dashboard',
+    '/businesses',
+    '/items',
+    '/jobs',
+    '/admin'
+  ]
+
+  // Define auth routes
+  const authRoutes = ['/auth/login', '/auth/signup']
+
+  // Redirect to login if user is not authenticated and trying to access protected routes
+  if (!user && protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
   // If user is authenticated and tries to access auth pages, redirect to dashboard
-  if (user && req.nextUrl.pathname.startsWith('/auth')) {
+  if (user && authRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
-  // Add this check to existing middleware
-  if (req.nextUrl.pathname.startsWith('/admin') && session?.user?.email !== 'admin@email.com') {
-  return NextResponse.redirect(new URL('/dashboard', req.url))
-}
+  // Admin route protection
+  if (req.nextUrl.pathname.startsWith('/admin') && user?.email !== 'admin@email.com') {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
+  }
 
   return res
 }
