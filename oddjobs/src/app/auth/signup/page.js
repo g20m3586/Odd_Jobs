@@ -191,7 +191,7 @@ export default function SignupPage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      {/* <div className="grid grid-cols-2 gap-2 mb-6">
         <Button 
           variant="outline" 
           onClick={() => handleSocialLogin('google')}
@@ -219,7 +219,7 @@ export default function SignupPage() {
             Or continue with
           </span>
         </div>
-      </div>
+      </div> */}
 
       <CardContent>
         <form onSubmit={form.handleSubmit(handleSignup)} className="space-y-6">
