@@ -1,17 +1,16 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { CheckCircle2, Loader2, LockKeyhole } from 'lucide-react'
-import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Loader2, LockKeyhole, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,9 +18,9 @@ export default function ResetPasswordPage() {
   const [accessToken, setAccessToken] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
+    // Extract token from URL fragment
     const hash = window.location.hash.substring(1)
     const params = new URLSearchParams(hash)
     const token = params.get('access_token')
@@ -47,7 +46,6 @@ export default function ResetPasswordPage() {
     setLoading(true)
     toast.dismiss()
 
-    // Validate password
     if (password.length < 6) {
       toast.error('Password too short', {
         description: 'Password must be at least 6 characters'
@@ -73,7 +71,6 @@ export default function ResetPasswordPage() {
 
       if (error) throw error
 
-      // Visual success state
       setSuccess(true)
       toast.success('Password updated!', {
         description: 'You can now sign in with your new password',
@@ -191,5 +188,17 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="container flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
