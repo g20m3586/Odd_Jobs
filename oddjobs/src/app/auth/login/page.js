@@ -81,6 +81,14 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* // In your /app/auth/login/page.js */}
+        <div className="mt-4 text-center text-sm">
+          Forgot your password?{' '}
+          <Link href="/auth/forgot-password" className="text-primary underline">
+            Reset it here
+          </Link>
+        </div>
+
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Signing in...' : 'Sign in'}
         </Button>
