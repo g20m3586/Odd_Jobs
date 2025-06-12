@@ -136,11 +136,11 @@ export default function JobsPage() {
     <div className="container py-8 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold px-8">Available Jobs</h1>
-        <Button asChild>
+        {/* <Button asChild>
           <Link href="/jobs/post" className="flex items-center gap-2">
             Post a Job
           </Link>
-        </Button>
+        </Button> */}
       </div>
 
       {/* Filter Section */}

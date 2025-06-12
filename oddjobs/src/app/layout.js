@@ -6,10 +6,10 @@ import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'ODDJobs - Freelance Services Marketplace',
-  description: 'Find and offer freelance services for any project',
-}
+// export const metadata = {
+//   title: 'ODDJobs - Freelance Services Marketplace',
+//   description: 'Find and offer freelance services for any project',
+// }
 
 export default function RootLayout({ children }) {
   return (

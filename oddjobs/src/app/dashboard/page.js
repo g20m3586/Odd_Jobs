@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/client'
+import StatCard from '@/components/dashboard/StatCard'
+import ActionCard from '@/components/dashboard/ActionCard'
 import { Button } from '@/components/ui/button'
 
 export default function DashboardPage() {
@@ -32,33 +34,36 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Welcome back, {profile.name}!</h2>
-      <p className="text-muted-foreground mb-6">
-        You are logged in as a {profile.role}.
-      </p>
-
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Welcome back, {profile.name}!</h2>
+        <p className="text-muted-foreground">
+          You are logged in as <span className="font-medium">{profile.role}</span>.
+        </p>
+      </div>
+  
+      {/* Stat Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Profile Completeness" value="80%" />
+        <StatCard title="My Jobs" value="12 Jobs" />
+        <StatCard title="Account Type" value={profile.role} />
+        <StatCard title="Last Login" value={new Date(user.last_sign_in_at).toLocaleDateString()} />
+      </div>
+  
+      {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-2">My Profile</h3>
-          <p className="text-sm text-muted-foreground">
-            Update your profile information
-          </p>
-          <Button className="mt-4" asChild>
-            <a href="/dashboard/profile">Edit Profile</a>
-          </Button>
-        </div>
-
-        <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-2">My Jobs</h3>
-          <p className="text-sm text-muted-foreground">
-            View and manage your jobs
-          </p>
-          <Button className="mt-4" asChild>
-            <a href="/dashboard/jobs">View Jobs</a>
-          </Button>
-        </div>
+        <ActionCard
+          title="My Profile"
+          description="Update your profile information"
+          href="/dashboard/profile"
+        />
+        <ActionCard
+          title="My Jobs"
+          description="View and manage your jobs"
+          href="/dashboard/my-jobs"
+        />
       </div>
     </div>
   )
+  
 }
