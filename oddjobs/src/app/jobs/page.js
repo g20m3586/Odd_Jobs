@@ -27,7 +27,7 @@ export default function JobsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Build query with filters
+        // Build query with filters - removed user-specific filtering
         let query = supabase
           .from('jobs')
           .select('*')
