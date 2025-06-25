@@ -7,27 +7,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useForm } from "react-hook-form"
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    avatar_url: "",
-    role: "",
-    location: "",
-    bio: "",
-    twitter: "",
-    linkedin: "",
-    created_at: "",
-  })
-
-  const [file, setFile] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(null)
   const router = useRouter()
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,16 +38,22 @@ export default function ProfilePage() {
         .single()
 
       if (profileError) return setError(profileError.message)
-      if (data) setProfile(data)
+
+      if (data) {
+        setProfile(data)
+        for (const key in data) {
+          if (data.hasOwnProperty(key)) {
+            setValue(key, data[key])
+          }
+        }
+      }
     }
 
     fetchData()
-  }, [])
+  }, [setValue])
 
   const handleImageUpload = async (e) => {
     const selectedFile = e.target.files[0]
-    setFile(selectedFile)
-
     const { data: { user } } = await supabase.auth.getUser()
     const filePath = `avatars/${user.id}-${selectedFile.name}`
 
@@ -73,15 +74,20 @@ export default function ProfilePage() {
       .from("profiles")
       .update({ avatar_url: urlData.publicUrl })
       .eq("id", user.id)
+      .from("profiles")
+      .update({
+      ...formData,
+      updated_at: new Date().toISOString(),
+  })
+  .eq("id", user.id)
 
     if (updateError) return setError(updateError.message)
 
-    setProfile(prev => ({ ...prev, avatar_url: urlData.publicUrl }))
+    setValue("avatar_url", urlData.publicUrl)
     setSuccess(true)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const onSubmit = async (formData) => {
     setLoading(true)
     setError(null)
     setSuccess(false)
@@ -92,12 +98,7 @@ export default function ProfilePage() {
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
-        name: profile.name,
-        phone: profile.phone,
-        location: profile.location,
-        bio: profile.bio,
-        twitter: profile.twitter,
-        linkedin: profile.linkedin,
+        ...formData,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id)
@@ -112,7 +113,7 @@ export default function ProfilePage() {
     setLoading(false)
   }
 
-  if (!profile.email) return <p>Loading profile...</p>
+  if (!profile) return <p>Loading profile...</p>
 
   return (
     <div className="max-w-lg space-y-6">
@@ -129,7 +130,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Avatar + Upload */}
       <div className="flex items-center gap-4">
         <img
           src={profile.avatar_url || "/default-avatar.jpg"}
@@ -139,39 +139,26 @@ export default function ProfilePage() {
         <input type="file" accept="image/*" onChange={handleImageUpload} />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            value={profile.name}
-            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-            required
-          />
+          <Input id="name" {...register("name", { required: true })} />
+          {errors.name && <p className="text-red-500 text-sm">Name is required</p>}
         </div>
 
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" value={profile.email} disabled />
+          <Input id="email" {...register("email") } disabled />
         </div>
 
         <div>
           <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            value={profile.phone}
-            onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-            type="tel"
-          />
+          <Input id="phone" {...register("phone", { pattern: /^[0-9+\-\s()]*$/ })} />
         </div>
 
         <div>
           <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            value={profile.location}
-            onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-          />
+          <Input id="location" {...register("location")} />
         </div>
 
         <div>
@@ -180,35 +167,34 @@ export default function ProfilePage() {
             id="bio"
             className="w-full border rounded-md text-sm p-2"
             rows={4}
-            value={profile.bio}
-            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+            {...register("bio")}
           />
         </div>
 
         <div>
           <Label htmlFor="twitter">Twitter</Label>
-          <Input
-            id="twitter"
-            placeholder="@yourhandle"
-            value={profile.twitter}
-            onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
-          />
+          <Input id="twitter" {...register("twitter")} placeholder="@yourhandle" />
         </div>
 
         <div>
           <Label htmlFor="linkedin">LinkedIn</Label>
-          <Input
-            id="linkedin"
-            placeholder="https://linkedin.com/in/you"
-            value={profile.linkedin}
-            onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
-          />
+          <Input id="linkedin" {...register("linkedin")} placeholder="https://linkedin.com/in/you" />
         </div>
 
         <div className="text-sm text-muted-foreground">
           Role: <span className="font-medium">{profile.role}</span><br />
           Member since: {new Date(profile.created_at).toLocaleDateString()}
         </div>
+        <div className="flex items-center justify-between">
+  <Label htmlFor="is_public" className="text-sm">Public Profile</Label>
+  <input
+    type="checkbox"
+    id="is_public"
+    className="w-5 h-5"
+    {...register("is_public")}
+  />
+</div>
+
 
         <div className="flex items-center justify-between pt-4">
           <Button type="submit" disabled={loading}>
@@ -229,6 +215,10 @@ export default function ProfilePage() {
                 View My Public Profile
               </Link>
             )}
+            <Link href="/directory" className="text-sm text-muted-foreground hover:underline">
+  Browse Directory
+</Link>
+
           </div>
         </div>
       </form>

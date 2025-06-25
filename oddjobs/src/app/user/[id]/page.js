@@ -1,8 +1,8 @@
-// ✅ Updated Public Profile Page with all enhancements
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/client"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
-import { ExternalLink, MapPin, Twitter, Linkedin } from "lucide-react"
+import { MapPin, Twitter, Linkedin } from "lucide-react"
+import CopyProfileLinkButton from "@/components/CopyProfileLinkButton"
 
 export const dynamic = "force-dynamic"
 
@@ -22,14 +22,22 @@ export async function generateMetadata({ params }) {
 export default async function PublicProfilePage({ params }) {
   const { id } = params
 
+  // 1. Fetch profile data
   const { data: userProfile, error } = await supabase
     .from("profiles")
-    .select("name, bio, location, avatar_url, twitter, linkedin, role, created_at")
+    .select("name, bio, location, avatar_url, twitter, linkedin, role, created_at, views")
     .eq("id", id)
     .single()
 
   if (error || !userProfile) return notFound()
 
+  // 2. Increment view count
+  await supabase
+    .from("profiles")
+    .update({ views: (userProfile.views || 0) + 1 })
+    .eq("id", id)
+
+  // 3. Return updated profile with previous views shown
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6 text-center bg-white dark:bg-zinc-900 shadow rounded-xl">
       <img
@@ -53,6 +61,10 @@ export default async function PublicProfilePage({ params }) {
           {userProfile.bio}
         </p>
       )}
+
+      <p className="text-xs text-muted-foreground">
+        👁️ {userProfile.views || 0} profile views
+      </p>
 
       <div className="flex justify-center gap-4 mt-4">
         {userProfile.twitter && (
@@ -79,13 +91,9 @@ export default async function PublicProfilePage({ params }) {
       </div>
 
       <div className="mt-6">
-        <button
-          onClick={() => navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SITE_URL}/user/${id}`)}
-          className="text-sm text-muted-foreground hover:underline flex items-center justify-center gap-1"
-        >
-          <ExternalLink className="w-4 h-4" /> Copy profile link
-        </button>
+        <CopyProfileLinkButton userId={id} />
       </div>
     </div>
   )
 }
+

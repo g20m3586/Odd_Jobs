@@ -6,7 +6,7 @@ export default function ProfileCard({ user }) {
     <div className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-xl shadow p-4 space-y-3 w-full max-w-xs">
       <div className="flex flex-col items-center text-center">
         <img
-          src={user.avatar_url || "/default-avatar.png"}
+          src={user.avatar_url || "/default-avatar.jpg"}
           alt={user.name}
           className="w-20 h-20 rounded-full object-cover border-2 border-blue-500 mb-2"
         />
