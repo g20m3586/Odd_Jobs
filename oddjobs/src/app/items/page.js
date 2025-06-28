@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
@@ -15,6 +15,12 @@ export default function ItemsPage() {
   const [loading, setLoading] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const getImageUrl = (filename) => {
+    if (!filename) return null
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/item-images/public/${filename}`
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,11 +31,17 @@ export default function ItemsPage() {
           .order('created_at', { ascending: false })
 
         if (error) throw error
-        setItems(data || [])
+        
+        const processedItems = data?.map(item => ({
+          ...item,
+          image_url: item.image_url ? getImageUrl(item.image_url) : null
+        })) || []
+        
+        setItems(processedItems)
       } catch (error) {
-        console.error('Error fetching items:', error)
-        toast.error('Failed to load items', {
-          description: error.message
+        console.error('Fetch error:', error)
+        toast.error('Failed to load items', { 
+          description: error.message 
         })
       } finally {
         setLoading(false)
@@ -37,24 +49,35 @@ export default function ItemsPage() {
     }
 
     const checkAuth = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      if (error || !user) {
-        toast.error('Please sign in to view marketplace', {
-          action: {
-            label: 'Sign In',
-            onClick: () => router.push('/auth/login')
-          },
-        })
-        router.push('/auth/login')
-        return
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (error || !user) {
+          toast.error('Please sign in to view marketplace', {
+            action: {
+              label: 'Sign In',
+              onClick: () => router.push('/auth/login')
+            },
+          })
+          router.push('/auth/login')
+          return
+        }
+        setAuthChecked(true)
+        fetchData()
+      } catch (err) {
+        console.error('Auth check error:', err)
+        toast.error('Authentication error')
       }
-      setAuthChecked(true)
-      fetchData()
     }
 
     if (!authChecked) checkAuth()
     else fetchData()
   }, [authChecked, router])
+
+  useEffect(() => {
+    if (searchParams.get('posted') === '1') {
+      toast.success('Item posted successfully!')
+    }
+  }, [searchParams])
 
   if (loading) {
     return (
@@ -63,7 +86,6 @@ export default function ItemsPage() {
           <Skeleton className="h-9 w-[200px]" />
           <Skeleton className="h-10 w-[120px]" />
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
             <Card key={i} className="h-full flex flex-col">
@@ -90,9 +112,7 @@ export default function ItemsPage() {
           <p className="text-muted-foreground">Browse shared or sellable items</p>
         </div>
         <Button asChild>
-          <Link href="/items/post" className="flex items-center gap-2">
-            Sell an Item
-          </Link>
+          <Link href="/items/post">Sell an Item</Link>
         </Button>
       </div>
 
@@ -108,16 +128,17 @@ export default function ItemsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items.map((item) => (
-            <Card
-              key={item.id}
-              className="hover:shadow-lg hover:scale-[1.01] transition-all h-full flex flex-col"
-            >
+            <Card key={item.id} className="hover:shadow-lg hover:scale-[1.01] transition-all h-full flex flex-col">
               <CardHeader className="p-4">
                 {item.image_url ? (
                   <img
-                    src={supabase.storage.from('item-images').getPublicUrl(item.image_url).data.publicUrl}
+                    src={`{item.image_url}`}
                     alt={item.title}
                     className="w-full h-40 object-cover rounded-md mb-3"
+                    onError={(e) => {
+                      e.target.onerror = null
+                      e.target.src = '/placeholder-item.jpg'
+                    }}
                   />
                 ) : (
                   <div className="w-full h-40 bg-muted rounded-md flex items-center justify-center text-sm text-muted-foreground">
