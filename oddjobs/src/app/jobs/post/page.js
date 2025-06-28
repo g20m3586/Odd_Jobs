@@ -1,4 +1,3 @@
-// src/app/jobs/post/page.js
 "use client"
 
 import { useState } from 'react'
@@ -9,67 +8,79 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 export default function PostJobPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
-    category: 'general',
+    category: 'Design',
     deadline: '',
     address: ''
   })
   const [loading, setLoading] = useState(false)
   const [image, setImage] = useState(null)
-  const router = useRouter()
+
+  // Categories matching your jobs page
+  const categories = [
+    'Design',
+    'Development',
+    'Marketing',
+    'Writing',
+    'Administrative',
+    'Customer Service',
+    'Sales',
+    'Other'
+  ]
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Validate form
-      if (!formData.title || !formData.description || !formData.price) {
+      // Validate required fields
+      if (!formData.title.trim() || !formData.description.trim() || !formData.price) {
         throw new Error('Please fill all required fields')
       }
 
-      // Prepare job data
       const jobData = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         price: parseFloat(formData.price),
         category: formData.category,
         deadline: formData.deadline || null,
         user_id: user.id,
         status: 'open',
-        address: formData.address || null
+        address: formData.address.trim() || null,
+        is_featured: false // default value, can be changed later
       }
 
-      // If there's an image, upload it first
+      // Upload image if present
       if (image) {
+        // Create unique file name
+        const fileExt = image.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
         const { data: imageData, error: uploadError } = await supabase.storage
           .from('job-images')
-          .upload(`public/${image.name}`, image)
-        
+          .upload(`public/${fileName}`, image)
+
         if (uploadError) throw uploadError
         jobData.image_url = imageData.path
       }
 
-      // Insert job
       const { error } = await supabase.from('jobs').insert(jobData)
 
       if (error) throw error
 
       toast.success('Job posted successfully!')
-      router.push('/jobs')
+      router.push('/jobs/myjobs') // Redirect to MyJobs page
     } catch (error) {
-      toast.error('Error posting job', {
-        description: error.message
-      })
+      toast.error('Error posting job', { description: error.message })
     } finally {
       setLoading(false)
     }
@@ -82,16 +93,17 @@ export default function PostJobPage() {
   }
 
   return (
-    <div className="container py-8 max-w-2xl">
+    <div className="container py-8 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Post a New Job</h1>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="title">Job Title *</Label>
           <Input
             id="title"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            placeholder="Enter job title"
             required
           />
         </div>
@@ -102,7 +114,8 @@ export default function PostJobPage() {
             id="description"
             rows={6}
             value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Describe the job requirements"
             required
           />
         </div>
@@ -113,29 +126,31 @@ export default function PostJobPage() {
             <Input
               id="price"
               type="number"
-              min="5"
-              step="1"
+              min="1"
+              step="0.01"
               value={formData.price}
-              onChange={(e) => setFormData({...formData, price: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              placeholder="Enter budget"
               required
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
-            <select
-              id="category"
+            <Select
               value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              required
+              onValueChange={(value) => setFormData({ ...formData, category: value })}
+              id="category"
             >
-              <option value="general">General</option>
-              <option value="design">Design</option>
-              <option value="development">Development</option>
-              <option value="writing">Writing</option>
-              <option value="marketing">Marketing</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -146,7 +161,7 @@ export default function PostJobPage() {
             type="date"
             min={new Date().toISOString().split('T')[0]}
             value={formData.deadline}
-            onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
           />
         </div>
 
@@ -155,7 +170,7 @@ export default function PostJobPage() {
           <Input
             id="address"
             value={formData.address}
-            onChange={(e) => setFormData({...formData, address: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
             placeholder="Enter job location or address"
           />
         </div>

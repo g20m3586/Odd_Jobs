@@ -5,30 +5,58 @@ import { supabase } from '@/lib/supabase/client'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { use } from 'react'
 
-export default function ApplyPage({ params }) {
+export default function ApplyPage({ params: paramsPromise }) {
+  
+  const params = use(paramsPromise)
   const [coverLetter, setCoverLetter] = useState('')
   const [loading, setLoading] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
+  const [jobValid, setJobValid] = useState(true)
+  const [alreadyApplied, setAlreadyApplied] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    const checkOwnership = async () => {
+    const checkJobEligibility = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      const { data: job } = await supabase
+      const { data: job, error } = await supabase
         .from('jobs')
-        .select('user_id')
+        .select('user_id, deadline, status')
         .eq('id', params.id)
         .single()
 
-      if (user?.id === job?.user_id) {
+      if (error || !job) {
+        setJobValid(false)
+        return
+      }
+
+      if (user?.id === job.user_id) {
         setIsOwner(true)
-        toast.error("You can't apply to your own job")
-        router.push(`/jobs/${params.id}`)
+        return
+      }
+
+      const deadlinePassed = job.deadline && new Date(job.deadline) < new Date()
+      if (job.status !== 'open' || deadlinePassed) {
+        setJobValid(false)
+        return
+      }
+
+      // Check if the user already applied
+      const { data: existingApplication } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('job_id', params.id)
+        .maybeSingle()
+
+      if (existingApplication) {
+        setAlreadyApplied(true)
       }
     }
-    checkOwnership()
-  }, [params.id, router])
+
+    checkJobEligibility()
+  }, [params.id])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,19 +64,10 @@ export default function ApplyPage({ params }) {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const { data: job } = await supabase
-        .from('jobs')
-        .select('user_id')
-        .eq('id', params.id)
-        .single()
-
-      if (!job) throw new Error('Job not found')
-      if (user.id === job.user_id) throw new Error("Can't apply to your own job")
 
       const { error } = await supabase.from('applications').insert({
         job_id: params.id,
         user_id: user.id,
-        business_id: job.user_id,
         cover_letter: coverLetter,
         status: 'pending'
       })
@@ -64,7 +83,44 @@ export default function ApplyPage({ params }) {
     }
   }
 
-  if (isOwner) return null
+  if (!jobValid) {
+    return (
+      <div className="container py-16 text-center">
+        <p className="text-lg text-destructive font-semibold">
+          This job is not available or the deadline has passed.
+        </p>
+        <Button className="mt-4" onClick={() => router.push('/jobs')}>
+          Back to Jobs
+        </Button>
+      </div>
+    )
+  }
+
+  if (isOwner) {
+    return (
+      <div className="container py-16 text-center">
+        <p className="text-lg font-semibold text-muted-foreground">
+          You cannot apply to your own job.
+        </p>
+        <Button className="mt-4" onClick={() => router.push(`/jobs/${params.id}`)}>
+          Go Back
+        </Button>
+      </div>
+    )
+  }
+
+  if (alreadyApplied) {
+    return (
+      <div className="container py-16 text-center">
+        <p className="text-lg text-muted-foreground">
+          You have already applied to this job.
+        </p>
+        <Button className="mt-4" onClick={() => router.push(`/jobs/${params.id}`)}>
+          View Job
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="container py-8 max-w-2xl">

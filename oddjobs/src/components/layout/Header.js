@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { usePathname } from 'next/navigation'
-import {supabase} from '@/lib/client'
+import { supabase } from '@/lib/client'
 import { useEffect, useState } from 'react'
 
 export default function Header() {
@@ -43,7 +43,7 @@ export default function Header() {
           <Link href="/" className="font-bold text-xl">
             ODDJobs
           </Link>
-          
+
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
@@ -54,6 +54,15 @@ export default function Header() {
                 {link.name}
               </Link>
             ))}
+
+            {user && (
+              <Link
+                href="/jobs/myjobs"
+                className={`${pathname === '/jobs/myjobs' ? 'text-primary' : 'text-muted-foreground'} hover:text-primary transition-colors`}
+              >
+                My Jobs
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-4">

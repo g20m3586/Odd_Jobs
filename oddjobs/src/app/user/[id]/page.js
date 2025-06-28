@@ -22,7 +22,6 @@ export async function generateMetadata({ params }) {
 export default async function PublicProfilePage({ params }) {
   const { id } = params
 
-  // 1. Fetch profile data
   const { data: userProfile, error } = await supabase
     .from("profiles")
     .select("name, bio, location, avatar_url, twitter, linkedin, role, created_at, views")
@@ -31,50 +30,70 @@ export default async function PublicProfilePage({ params }) {
 
   if (error || !userProfile) return notFound()
 
-  // 2. Increment view count
-  await supabase
+  // Increment view count (fire & forget)
+  supabase
     .from("profiles")
     .update({ views: (userProfile.views || 0) + 1 })
     .eq("id", id)
+    .then(() => {})
+    .catch(() => {})
 
-  // 3. Return updated profile with previous views shown
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6 text-center bg-white dark:bg-zinc-900 shadow rounded-xl">
-      <img
-        src={userProfile.avatar_url || "/default-avatar.png"}
-        alt={userProfile.name}
-        className="w-28 h-28 rounded-full object-cover mx-auto border-4 border-blue-500"
-      />
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{userProfile.name}</h1>
-      <p className="text-muted-foreground text-sm">
-        {userProfile.role} • Joined {new Date(userProfile.created_at).toLocaleDateString()}
-      </p>
+    <main className="max-w-4xl mx-auto p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-xl">
+      {/* Top Hero Section */}
+      <section className="flex flex-col md:flex-row items-center md:items-start gap-8">
+        <img
+          src={userProfile.avatar_url || "/default-avatar.jpg"}
+          alt={`${userProfile.name}'s avatar`}
+          className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-blue-600 dark:border-blue-400 object-cover shadow-md"
+          loading="lazy"
+        />
 
-      {userProfile.location && (
-        <p className="text-sm text-muted-foreground flex justify-center items-center gap-1">
-          <MapPin className="w-4 h-4" /> {userProfile.location}
-        </p>
-      )}
+        <div className="text-center md:text-left flex-1 space-y-3">
+          <h1 className="text-4xl font-extrabold text-zinc-900 dark:text-white">{userProfile.name}</h1>
+          <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+            {userProfile.role || "Member"}
+          </p>
 
+          {userProfile.location && (
+            <p className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground text-sm">
+              <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+              {userProfile.location}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="mt-8 flex justify-center md:justify-start gap-8 flex-wrap">
+        <div className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg px-6 py-3 font-semibold shadow-sm">
+          Joined: <span className="font-normal">{new Date(userProfile.created_at).toLocaleDateString()}</span>
+        </div>
+
+        <div className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg px-6 py-3 font-semibold shadow-sm">
+          Profile Views: <span className="font-normal">{userProfile.views || 0}</span>
+        </div>
+      </section>
+
+      {/* Bio Section */}
       {userProfile.bio && (
-        <p className="mt-4 text-sm text-gray-800 dark:text-gray-200 max-w-xl mx-auto">
+        <section className="mt-10 max-w-3xl mx-auto text-gray-800 dark:text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
           {userProfile.bio}
-        </p>
+        </section>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        👁️ {userProfile.views || 0} profile views
-      </p>
-
-      <div className="flex justify-center gap-4 mt-4">
+      {/* Social Buttons */}
+      <section className="mt-12 flex justify-center md:justify-start gap-6">
         {userProfile.twitter && (
           <a
             href={`https://twitter.com/${userProfile.twitter.replace("@", "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
+            className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-5 py-3 rounded-lg transition"
+            aria-label="Twitter profile"
           >
-            <Twitter className="w-4 h-4" /> Twitter
+            <Twitter className="w-6 h-6" />
+            @{userProfile.twitter.replace("@", "")}
           </a>
         )}
 
@@ -83,17 +102,19 @@ export default async function PublicProfilePage({ params }) {
             href={userProfile.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-700 hover:text-blue-800 flex items-center gap-1"
+            className="inline-flex items-center gap-3 bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-lg transition"
+            aria-label="LinkedIn profile"
           >
-            <Linkedin className="w-4 h-4" /> LinkedIn
+            <Linkedin className="w-6 h-6" />
+            LinkedIn
           </a>
         )}
-      </div>
+      </section>
 
-      <div className="mt-6">
+      {/* Copy Profile Link Button */}
+      <section className="mt-14 flex justify-center">
         <CopyProfileLinkButton userId={id} />
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
-

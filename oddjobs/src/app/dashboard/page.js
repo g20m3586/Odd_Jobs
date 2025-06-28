@@ -1,13 +1,60 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/client'
-import StatCard from '@/components/dashboard/StatCard'
-import ActionCard from '@/components/dashboard/ActionCard'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowRight, Plus, Search } from 'lucide-react'
-import { BriefcaseIcon, UserIcon } from '@heroicons/react/24/outline'
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/client"
+import StatCard from "@/components/dashboard/StatCard"
+import ActionCard from "@/components/dashboard/ActionCard"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ArrowRight, Plus, Search } from "lucide-react"
+import {
+  BriefcaseIcon,
+  UserIcon,
+  InboxIcon,
+  CurrencyDollarIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline"
+
+const activityTypeMap = {
+  job_posted: {
+    icon: BriefcaseIcon,
+    bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    iconColor: "text-blue-600 dark:text-blue-400",
+    label: "New job posted",
+  },
+  profile_updated: {
+    icon: UserIcon,
+    bgColor: "bg-green-50 dark:bg-green-900/20",
+    iconColor: "text-green-600 dark:text-green-400",
+    label: "Profile updated",
+  },
+  application_submitted: {
+    icon: InboxIcon,
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    iconColor: "text-amber-600 dark:text-amber-400",
+    label: "Application submitted",
+  },
+  default: {
+    icon: ClockIcon,
+    bgColor: "bg-gray-50 dark:bg-gray-700/20",
+    iconColor: "text-gray-600 dark:text-gray-400",
+    label: "Activity",
+  },
+}
+
+function timeAgoFromNow(dateString) {
+  const date = new Date(dateString)
+  const now = new Date()
+  const seconds = Math.floor((now - date) / 1000)
+
+  if (seconds < 60) return `${seconds} second${seconds !== 1 ? "s" : ""} ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`
+  const days = Math.floor(hours / 24)
+  return `${days} day${days !== 1 ? "s" : ""} ago`
+}
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
@@ -16,8 +63,9 @@ export default function DashboardPage() {
     jobCount: 0,
     applications: 0,
     earnings: 0,
-    profileComplete: 0
+    profileComplete: 0,
   })
+  const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -26,78 +74,79 @@ export default function DashboardPage() {
       try {
         setLoading(true)
         setError(null)
-        
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        
-        if (authError) {
-          throw authError
-        }
-        
+
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser()
+
+        if (authError) throw authError
+
         setUser(user)
 
         if (user) {
-          // Fetch profile first since other queries depend on it
           const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
             .single()
 
-          if (profileError) {
-            throw profileError
-          }
+          if (profileError) throw profileError
 
           setProfile(profile)
-          
-          // Initialize default values
-          let jobCount = 0
+
+          // Get job count
+          const { count: jobsCount } = await supabase
+            .from("jobs")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+
+          // Get applications count and earnings if business
           let applications = 0
           let earnings = 0
-
-          // Fetch jobs count
-          const { count: jobsCount } = await supabase
-            .from('jobs')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-          jobCount = jobsCount || 0
-
-          // Only fetch business-specific data if user is a business
-          if (profile?.role === 'business') {
+          if (profile?.role === "business") {
             const { count: appsCount } = await supabase
-              .from('applications')
-              .select('*', { count: 'exact', head: true })
-              .eq('business_id', user.id)
+              .from("applications")
+              .select("*", { count: "exact", head: true })
+              .eq("business_id", user.id)
             applications = appsCount || 0
 
             const { data: payments } = await supabase
-              .from('payments')
-              .select('amount')
-              .eq('recipient_id', user.id)
+              .from("payments")
+              .select("amount")
+              .eq("recipient_id", user.id)
             earnings = payments?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
           }
 
-          // Calculate profile completeness
-          const completeFields = [
-            profile?.name,
-            profile?.email,
-            profile?.phone
-          ].filter(Boolean).length
-          
+          // Profile completeness (name, email, phone, avatar)
+          const fields = [profile?.name, profile?.email, profile?.phone, profile?.avatar_url]
+          const completeCount = fields.filter(Boolean).length
+
           setStats({
-            jobCount,
+            jobCount: jobsCount || 0,
             applications,
             earnings,
-            profileComplete: Math.round((completeFields / 3) * 100)
+            profileComplete: Math.round((completeCount / fields.length) * 100),
           })
+
+          // Fetch recent activities (latest 5)
+          const { data: activitiesData, error: activitiesError } = await supabase
+            .from("activities")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(5)
+
+          if (activitiesError) throw activitiesError
+          setActivities(activitiesData || [])
         }
       } catch (err) {
-        console.error('Failed to fetch dashboard data:', err)
-        setError(err.message || 'Failed to load dashboard data')
+        console.error("Failed to fetch dashboard data:", err)
+        setError(err.message || "Failed to load dashboard data")
       } finally {
         setLoading(false)
       }
     }
-
     fetchData()
   }, [])
 
@@ -142,7 +191,9 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {profile.name}!</h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Welcome back, {profile.name}!
+        </h2>
         <p className="text-gray-500 dark:text-gray-400">
           Here is what is happening with your account today.
         </p>
@@ -150,48 +201,63 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Profile Completeness" 
+        <StatCard
+          title="Profile Completeness"
           value={`${stats.profileComplete}%`}
-          icon="user-check"
-          trend={stats.profileComplete > 80 ? "up" : stats.profileComplete > 50 ? "neutral" : "down"}
-          variant={stats.profileComplete < 50 ? 'destructive' : stats.profileComplete < 80 ? 'warning' : 'success'}
+          icon={<UserIcon className="w-6 h-6 text-white" />}
+          trend={
+            stats.profileComplete > 80
+              ? "up"
+              : stats.profileComplete > 50
+              ? "neutral"
+              : "down"
+          }
+          variant={
+            stats.profileComplete < 50
+              ? "destructive"
+              : stats.profileComplete < 80
+              ? "warning"
+              : "success"
+          }
         />
-        <StatCard 
-          title="My Jobs" 
+        <StatCard
+          title="My Jobs"
           value={stats.jobCount}
-          subtitle={stats.jobCount === 1 ? 'Job' : 'Jobs'}
-          icon="briefcase"
+          subtitle={stats.jobCount === 1 ? "Job" : "Jobs"}
+          icon={<BriefcaseIcon className="w-6 h-6 text-white" />}
           trend="up"
         />
-        
-        {profile.role === 'business' ? (
+        {profile.role === "business" ? (
           <>
-            <StatCard 
-              title="Applications" 
+            <StatCard
+              title="Applications"
               value={stats.applications}
-              subtitle={stats.applications === 1 ? 'Application' : 'Applications'}
-              icon="inbox"
+              subtitle={stats.applications === 1 ? "Application" : "Applications"}
+              icon={<InboxIcon className="w-6 h-6 text-white" />}
               trend="up"
             />
-            <StatCard 
-              title="Total Earnings" 
+            <StatCard
+              title="Total Earnings"
               value={`$${stats.earnings.toFixed(2)}`}
-              icon="dollar-sign"
+              icon={<CurrencyDollarIcon className="w-6 h-6 text-white" />}
               trend="up"
             />
           </>
         ) : (
           <>
-            <StatCard 
-              title="Account Type" 
-              value={profile.role === 'business' ? 'Business' : 'Freelancer'} 
-              icon="user"
+            <StatCard
+              title="Account Type"
+              value={profile.role === "business" ? "Business" : "Freelancer"}
+              icon={<UserIcon className="w-6 h-6 text-white" />}
             />
-            <StatCard 
-              title="Last Login" 
-              value={user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A'} 
-              icon="clock"
+            <StatCard
+              title="Last Login"
+              value={
+                user.last_sign_in_at
+                  ? new Date(user.last_sign_in_at).toLocaleDateString()
+                  : "N/A"
+              }
+              icon={<ClockIcon className="w-6 h-6 text-white" />}
             />
           </>
         )}
@@ -203,23 +269,29 @@ export default function DashboardPage() {
           title="Complete Profile"
           description={`${stats.profileComplete}% completed - Finish your setup`}
           href="/dashboard/profile"
-          icon="user"
-          variant={stats.profileComplete < 50 ? 'destructive' : stats.profileComplete < 80 ? 'warning' : 'success'}
+          icon={<UserIcon className="w-6 h-6" />}
+          variant={
+            stats.profileComplete < 50
+              ? "destructive"
+              : stats.profileComplete < 80
+              ? "warning"
+              : "success"
+          }
           actionText="Complete Now"
         />
         <ActionCard
-          title={profile.role === 'business' ? "Post New Job" : "Browse Jobs"}
-          description={profile.role === 'business' 
-            ? "Create a new job listing" 
-            : "Find available jobs"}
-          href={profile.role === 'business' ? "/jobs/post" : "/jobs"}
-          icon={profile.role === 'business' ? "plus" : "search"}
-          actionText={profile.role === 'business' ? "Post Job" : "Browse"}
+          title={profile.role === "business" ? "Post New Job" : "Browse Jobs"}
+          description={
+            profile.role === "business" ? "Create a new job listing" : "Find available jobs"
+          }
+          href={profile.role === "business" ? "/jobs/post" : "/jobs"}
+          icon={profile.role === "business" ? <Plus className="w-6 h-6" /> : <Search className="w-6 h-6" />}
+          actionText={profile.role === "business" ? "Post Job" : "Browse"}
         />
       </div>
 
       {/* Recent Activity Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+      <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
           <Button variant="ghost" className="text-blue-600 dark:text-blue-400">
@@ -227,26 +299,31 @@ export default function DashboardPage() {
           </Button>
         </div>
         <div className="space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">
-              <BriefcaseIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">New job posted</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">2 hours ago</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded-lg">
-              <UserIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Profile updated</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">1 day ago</p>
-            </div>
-          </div>
+          {activities.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No recent activity</p>
+          ) : (
+            activities.map((activity) => {
+              const typeInfo = activityTypeMap[activity.type] || activityTypeMap.default
+              const Icon = typeInfo.icon
+              const timeAgo = timeAgoFromNow(activity.created_at)
+
+              return (
+                <div key={activity.id} className="flex items-start gap-4">
+                  <div className={`${typeInfo.bgColor} p-2 rounded-lg`}>
+                    <Icon className={`h-5 w-5 ${typeInfo.iconColor}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {activity.description || typeInfo.label}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{timeAgo}</p>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
-      </div>
+      </section>
     </div>
   )
 }
