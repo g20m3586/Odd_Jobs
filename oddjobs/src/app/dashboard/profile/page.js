@@ -8,26 +8,38 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
+import { Switch } from "@/components/ui/switch"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(null)
-  const router = useRouter()
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm()
 
+  const formData = watch()
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProfile = async () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) return setError("User not found")
+      if (userError || !user) return setError("User not authenticated")
 
       setUserId(user.id)
 
@@ -39,68 +51,42 @@ export default function ProfilePage() {
 
       if (profileError) return setError(profileError.message)
 
-      if (data) {
-        setProfile(data)
-        for (const key in data) {
-          if (data.hasOwnProperty(key)) {
-            setValue(key, data[key])
-          }
-        }
-      }
+      setProfile(data)
+      Object.keys(data).forEach((key) => setValue(key, data[key]))
+      setLoading(false)
     }
 
-    fetchData()
+    fetchProfile()
   }, [setValue])
 
   const handleImageUpload = async (e) => {
-    const selectedFile = e.target.files[0]
+    const file = e.target.files[0]
     const { data: { user } } = await supabase.auth.getUser()
-    const filePath = `avatars/${user.id}-${selectedFile.name}`
+    const filePath = `avatars/${user.id}-${file.name}`
 
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(filePath, selectedFile, { upsert: true })
+      .upload(filePath, file, { upsert: true })
 
-    if (uploadError) {
-      setError("Image upload failed.")
-      return
-    }
+    if (uploadError) return setError("Image upload failed.")
 
-    const { data: urlData } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(filePath)
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ avatar_url: urlData.publicUrl })
-      .eq("id", user.id)
-      .from("profiles")
-      .update({
-      ...formData,
-      updated_at: new Date().toISOString(),
-  })
-  .eq("id", user.id)
-
-    if (updateError) return setError(updateError.message)
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath)
+    await supabase.from("profiles").update({ avatar_url: urlData.publicUrl }).eq("id", user.id)
 
     setValue("avatar_url", urlData.publicUrl)
-    setSuccess(true)
+    setProfile(prev => ({ ...prev, avatar_url: urlData.publicUrl }))
   }
 
-  const onSubmit = async (formData) => {
-    setLoading(true)
-    setError(null)
+  const confirmSubmit = async () => {
     setSuccess(false)
-
+    setError(null)
     const { data: { user }, error: userError } = await supabase.auth.getUser()
+
     if (userError || !user) return setError("User not authenticated")
 
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({
-        ...formData,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ ...formData, updated_at: new Date().toISOString() })
       .eq("id", user.id)
 
     if (updateError) {
@@ -110,20 +96,16 @@ export default function ProfilePage() {
       setTimeout(() => setSuccess(false), 3000)
     }
 
-    setLoading(false)
+    setPreviewOpen(false)
   }
 
-  if (!profile) return <p>Loading profile...</p>
+  if (loading) return <p className="text-center py-6 animate-pulse">Loading...</p>
+  if (error) return <p className="text-center text-red-600">{error}</p>
 
   return (
-    <div className="max-w-lg space-y-6">
-      <h2 className="text-xl font-semibold">Profile Settings</h2>
+    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
+      <h2 className="text-3xl font-bold">Profile Settings</h2>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
           Profile updated successfully!
@@ -133,95 +115,99 @@ export default function ProfilePage() {
       <div className="flex items-center gap-4">
         <img
           src={profile.avatar_url || "/default-avatar.jpg"}
-          alt="Avatar"
-          className="w-20 h-20 rounded-full object-cover"
+          alt="avatar"
+          className="w-24 h-24 rounded-full border shadow"
         />
-        <input type="file" accept="image/*" onChange={handleImageUpload} />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="text-sm"
+        />
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <Label htmlFor="name">Full Name</Label>
-          <Input id="name" {...register("name", { required: true })} />
-          {errors.name && <p className="text-red-500 text-sm">Name is required</p>}
-        </div>
+      <form onSubmit={handleSubmit(() => setPreviewOpen(true))} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="name">Full Name</Label>
+            <Input id="name" {...register("name", { required: true })} />
+            {errors.name && <p className="text-red-500 text-sm">Name is required</p>}
+          </div>
 
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" {...register("email") } disabled />
-        </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" disabled {...register("email")} />
+          </div>
 
-        <div>
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" {...register("phone", { pattern: /^[0-9+\-\s()]*$/ })} />
-        </div>
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" {...register("phone")} />
+          </div>
 
-        <div>
-          <Label htmlFor="location">Location</Label>
-          <Input id="location" {...register("location")} />
+          <div>
+            <Label htmlFor="location">Location</Label>
+            <Input id="location" {...register("location")} />
+          </div>
         </div>
 
         <div>
           <Label htmlFor="bio">Bio</Label>
           <textarea
             id="bio"
-            className="w-full border rounded-md text-sm p-2"
-            rows={4}
             {...register("bio")}
+            rows={4}
+            className="w-full border rounded-md p-2 text-sm"
           />
         </div>
 
-        <div>
-          <Label htmlFor="twitter">Twitter</Label>
-          <Input id="twitter" {...register("twitter")} placeholder="@yourhandle" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="twitter">Twitter</Label>
+            <Input id="twitter" {...register("twitter")} />
+          </div>
+          <div>
+            <Label htmlFor="linkedin">LinkedIn</Label>
+            <Input id="linkedin" {...register("linkedin")} />
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="linkedin">LinkedIn</Label>
-          <Input id="linkedin" {...register("linkedin")} placeholder="https://linkedin.com/in/you" />
-        </div>
-
-        <div className="text-sm text-muted-foreground">
-          Role: <span className="font-medium">{profile.role}</span><br />
-          Member since: {new Date(profile.created_at).toLocaleDateString()}
-        </div>
         <div className="flex items-center justify-between">
-  <Label htmlFor="is_public" className="text-sm">Public Profile</Label>
-  <input
-    type="checkbox"
-    id="is_public"
-    className="w-5 h-5"
-    {...register("is_public")}
-  />
-</div>
+          <Label htmlFor="is_public">Public Profile</Label>
+          <Switch id="is_public" {...register("is_public")} />
+        </div>
 
-
-        <div className="flex items-center justify-between pt-4">
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
-          <div className="flex flex-col text-right gap-1">
-            <Link
-              href="/auth/change-password"
-              className="text-sm text-primary hover:underline"
-            >
-              Change Password
-            </Link>
-            {userId && (
-              <Link
-                href={`/user/${userId}`}
-                className="text-sm text-muted-foreground hover:underline"
-              >
-                View My Public Profile
-              </Link>
-            )}
-            <Link href="/directory" className="text-sm text-muted-foreground hover:underline">
-  Browse Directory
-</Link>
-
+        <div className="flex items-center justify-between pt-6">
+          <Button type="submit">Preview & Save</Button>
+          <div className="text-sm space-y-1 text-right">
+            <Link href="/auth/change-password" className="text-primary hover:underline block">Change Password</Link>
+            {userId && <Link href={`/user/${userId}`} className="hover:underline block text-muted-foreground">View Profile</Link>}
+            <Link href="/directory" className="hover:underline block text-muted-foreground">Directory</Link>
           </div>
         </div>
       </form>
+
+      {/* Modal Preview */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Profile Changes</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p><strong>Name:</strong> {formData.name}</p>
+            <p><strong>Email:</strong> {formData.email}</p>
+            <p><strong>Phone:</strong> {formData.phone}</p>
+            <p><strong>Location:</strong> {formData.location}</p>
+            <p><strong>Bio:</strong> {formData.bio}</p>
+            <p><strong>Twitter:</strong> {formData.twitter}</p>
+            <p><strong>LinkedIn:</strong> {formData.linkedin}</p>
+            <p><strong>Public:</strong> {formData.is_public ? "Yes" : "No"}</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={confirmSubmit}>Confirm</Button>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

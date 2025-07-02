@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Search, Filter, AlertCircle, Clock, MapPin, DollarSign, BadgeCheck } from 'lucide-react'
+import { Search, Filter, AlertCircle, Clock, MapPin, DollarSign, BadgeCheck, Hourglass, Ban } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
@@ -92,6 +92,19 @@ export default function JobsPage() {
       maxPrice: '',
       jobType: 'any'
     })
+  }
+
+  // Helper to check if a job is expired
+  const isExpired = (job) => {
+    if (!job.deadline) return false
+    const today = new Date()
+    const deadline = new Date(job.deadline)
+    return deadline < today
+  }
+
+  // Helper to check if a job is completed
+  const isCompleted = (job) => {
+    return job.status?.toLowerCase() === 'completed'
   }
 
   if (loading) {
@@ -302,58 +315,73 @@ export default function JobsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {jobs.map((job) => (
-            <Card 
-              key={job.id} 
-              className="hover:shadow-lg transition-all h-full flex flex-col group"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg leading-tight">
-                    <Link href={`/jobs/${job.id}`} className="hover:underline">
-                      {job.title}
-                    </Link>
-                  </CardTitle>
-                  {job.is_featured && (
-                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
-                      <BadgeCheck className="h-3 w-3" /> Featured
-                    </span>
-                  )}
-                </div>
-                <CardDescription className="flex items-center gap-2 text-sm mt-2">
-                  <span className="font-medium text-primary">${job.price?.toFixed(2)}</span>
-                  <span>•</span>
-                  <span className="capitalize">{job.job_type || 'Not specified'}</span>
-                </CardDescription>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-xs">
-                    <MapPin className="h-3 w-3" /> {job.location || 'Remote'}
-                  </span>
-                  <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-xs capitalize">
-                    {job.category}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="line-clamp-3 text-muted-foreground text-sm">
-                  {job.description}
-                </p>
-                {job.deadline && (
-                  <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>Apply by {new Date(job.deadline).toLocaleDateString()}</span>
+          {jobs.map((job) => {
+            const expired = isExpired(job)
+            const completed = isCompleted(job)
+
+            return (
+              <Card 
+                key={job.id} 
+                className={`hover:shadow-lg transition-all h-full flex flex-col group ${expired || completed ? 'opacity-60' : ''}`}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg leading-tight">
+                      <Link href={`/jobs/${job.id}`} className="hover:underline">
+                        {job.title}
+                      </Link>
+                    </CardTitle>
+                    {job.is_featured && (
+                      <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
+                        <BadgeCheck className="h-3 w-3" /> Featured
+                      </span>
+                    )}
                   </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button asChild className="w-full" variant="outline">
-                  <Link href={`/jobs/${job.id}`}>
-                    View Details
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  <CardDescription className="flex items-center gap-2 text-sm mt-2">
+                    <span className="font-medium text-primary">${job.price?.toFixed(2)}</span>
+                    <span>•</span>
+                    <span className="capitalize">{job.job_type || 'Not specified'}</span>
+                  </CardDescription>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-xs">
+                      <MapPin className="h-3 w-3" /> {job.location || 'Remote'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-xs capitalize">
+                      {job.category}
+                    </span>
+                    {expired && (
+                      <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                        <Hourglass className="h-3 w-3" /> Expired
+                      </span>
+                    )}
+                    {completed && (
+                      <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
+                        <Ban className="h-3 w-3" /> Completed
+                      </span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="line-clamp-3 text-muted-foreground text-sm">
+                    {job.description}
+                  </p>
+                  {job.deadline && (
+                    <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>Apply by {new Date(job.deadline).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter>
+                  <Button asChild className="w-full" variant="outline">
+                    <Link href={`/jobs/${job.id}`}>
+                      View Details
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
       )}
 
