@@ -75,13 +75,23 @@ export default function ItemDetailPage() {
       <p className="text-muted-foreground text-sm capitalize">
         {item.condition} • {item.category}
       </p>
-      {item.image_url && (
+
+      {item.image_url ? (
         <img
-          src={`https://qnpwynomeazsbhlenltx.supabase.co/storage/v1/object/public/item-images/${item.image_url}`}
+          src={`https://qnpwynomeazsbhlenltx.supabase.co/storage/v1/object/public/item-images/public/${item.image_url}`}
           alt={item.title}
           className="w-full h-72 object-cover rounded-lg shadow"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.style.display = 'none'
+          }}
         />
+      ) : (
+        <div className="w-full h-72 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
+          No image available
+        </div>
       )}
+
       <p className="text-lg font-semibold text-primary">${item.price.toFixed(2)}</p>
       <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
 
@@ -92,7 +102,7 @@ export default function ItemDetailPage() {
             <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </>
         ) : (
-          <Button variant="outline">Contact Seller</Button> // To be implemented later
+          <Button variant="outline">Contact Seller</Button> // to be implemented
         )}
       </div>
     </div>

@@ -1,14 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useParams } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
+
+const VALID_CONDITIONS = ["new", "like_new", "good", "fair", "poor"]
+const CATEGORIES = ["general", "electronics", "clothing", "books", "furniture", "vehicles", "property"]
 
 export default function EditItemPage() {
   const { id } = useParams()
@@ -20,8 +23,8 @@ export default function EditItemPage() {
     title: "",
     description: "",
     price: "",
-    category: "",
-    condition: ""
+    category: "general",
+    condition: "good"
   })
 
   useEffect(() => {
@@ -44,11 +47,11 @@ export default function EditItemPage() {
         }
 
         setFormData({
-          title: item.title,
-          description: item.description,
-          price: item.price.toString(),
-          category: item.category,
-          condition: item.condition
+          title: item.title || "",
+          description: item.description || "",
+          price: item.price?.toString() || "",
+          category: item.category || "general",
+          condition: item.condition || "good"
         })
       } catch (error) {
         toast.error("Error loading item", { description: error.message })
@@ -69,28 +72,46 @@ export default function EditItemPage() {
     setUpdating(true)
 
     try {
+      const price = parseFloat(formData.price)
+      if (isNaN(price) || price < 0 || price > 1000000) {
+        toast.error("Please enter a valid price between $0 and $1,000,000")
+        setUpdating(false)
+        return
+      }
+
+      if (!VALID_CONDITIONS.includes(formData.condition)) {
+        toast.error("Invalid item condition")
+        setUpdating(false)
+        return
+      }
+
       let image_url = null
 
-      // Upload new image if provided
       if (imageFile) {
         const ext = imageFile.name.split(".").pop()
-        const filePath = `items/${Date.now()}-${Math.random()}.${ext}`
+        const filePath = `public/${Date.now()}-${Math.random()}.${ext}`
+        const uploadToast = toast.loading("Uploading image...")
 
-        const { data, error: uploadError } = await supabase.storage
+        const { data, error: uploadError } = await supabase
+          .storage
           .from("item-images")
           .upload(filePath, imageFile)
 
+        toast.dismiss(uploadToast)
+
         if (uploadError) throw uploadError
-        image_url = data?.path
+        const { data: publicUrlData } = supabase.storage
+          .from("item-images")
+          .getPublicUrl(filePath)
+
+        image_url = publicUrlData?.publicUrl
       }
 
-      // Update item
       const updates = {
         ...formData,
-        price: parseFloat(formData.price),
+        price,
+        image_url: image_url || undefined
       }
-
-      if (image_url) updates.image_url = image_url
 
       const { error } = await supabase
         .from("items")
@@ -102,7 +123,10 @@ export default function EditItemPage() {
       toast.success("Item updated successfully!")
       router.push("/items/my")
     } catch (error) {
-      toast.error("Update failed", { description: error.message })
+      console.error("Update failed:", error)
+      toast.error("Update failed", {
+        description: error.message || "Something went wrong"
+      })
     } finally {
       setUpdating(false)
     }
@@ -142,11 +166,9 @@ export default function EditItemPage() {
               className="border rounded-md h-10 px-3 text-sm w-full"
               required
             >
-              <option value="general">General</option>
-              <option value="electronics">Electronics</option>
-              <option value="clothing">Clothing</option>
-              <option value="books">Books</option>
-              <option value="furniture">Furniture</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -160,9 +182,11 @@ export default function EditItemPage() {
             className="border rounded-md h-10 px-3 text-sm w-full"
             required
           >
-            <option value="new">New</option>
-            <option value="used">Used</option>
-            <option value="refurbished">Refurbished</option>
+            {VALID_CONDITIONS.map((cond) => (
+              <option key={cond} value={cond}>
+                {cond.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -172,7 +196,14 @@ export default function EditItemPage() {
         </div>
 
         <Button type="submit" className="w-full" disabled={updating}>
-          {updating ? "Saving..." : "Save Changes"}
+          {updating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
         </Button>
       </form>
     </div>
