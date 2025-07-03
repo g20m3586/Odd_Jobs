@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/client"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -15,6 +15,9 @@ export default function ItemDetailPage() {
   const [item, setItem] = useState(null)
   const [userId, setUserId] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const getImageUrl = (filename) =>
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/item-images/public/${filename}`
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -57,7 +60,7 @@ export default function ItemDetailPage() {
 
   if (loading) {
     return (
-      <div className="container py-10">
+      <div className="container py-10 max-w-3xl mx-auto">
         <Skeleton className="h-8 w-1/2 mb-4" />
         <Skeleton className="h-5 w-1/4 mb-2" />
         <Skeleton className="h-60 w-full rounded mb-4" />
@@ -70,41 +73,49 @@ export default function ItemDetailPage() {
   if (!item) return null
 
   return (
-    <div className="container max-w-3xl py-10 space-y-6 animate-fade-in">
-      <h1 className="text-3xl font-bold">{item.title}</h1>
-      <p className="text-muted-foreground text-sm capitalize">
-        {item.condition} • {item.category}
-      </p>
+    <div className="min-h-screen flex justify-center px-4 py-10 animate-fade-in">
+      <Card className="w-full max-w-3xl p-6">
+        <CardHeader className="mb-4">
+          <h1 className="text-3xl font-bold">{item.title}</h1>
+          <p className="text-muted-foreground text-sm capitalize mt-1">
+            {item.condition} • {item.category}
+          </p>
+        </CardHeader>
 
-      {item.image_url ? (
-        <img
-          src={`https://qnpwynomeazsbhlenltx.supabase.co/storage/v1/object/public/item-images/public/${item.image_url}`}
-          alt={item.title}
-          className="w-full h-72 object-cover rounded-lg shadow"
-          onError={(e) => {
-            e.currentTarget.onerror = null
-            e.currentTarget.style.display = 'none'
-          }}
-        />
-      ) : (
-        <div className="w-full h-72 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-          No image available
-        </div>
-      )}
-
-      <p className="text-lg font-semibold text-primary">${item.price.toFixed(2)}</p>
-      <p className="text-sm text-gray-700 dark:text-gray-300">{item.description}</p>
-
-      <div className="flex gap-4 mt-6">
-        {userId === item.user_id ? (
-          <>
-            <Button onClick={() => router.push(`/items/edit/${item.id}`)}>Edit</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-          </>
+        {item.image_url ? (
+          <img
+            src={getImageUrl(item.image_url)}
+            alt={item.title}
+            className="w-full h-72 object-cover rounded-lg shadow mb-4"
+            onError={(e) => {
+              e.currentTarget.onerror = null
+              e.currentTarget.style.display = 'none'
+            }}
+          />
         ) : (
-          <Button variant="outline">Contact Seller</Button> // to be implemented
+          <div className="w-full h-72 bg-muted rounded-md flex items-center justify-center text-muted-foreground mb-4">
+            No image available
+          </div>
         )}
-      </div>
+
+        <CardContent className="space-y-3">
+          <p className="text-lg font-semibold text-primary">
+            ${item.price.toFixed(2)}
+          </p>
+          <p className="text-sm text-muted-foreground">{item.description}</p>
+        </CardContent>
+
+        <CardFooter className="flex justify-end gap-4 pt-6">
+          {userId === item.user_id ? (
+            <>
+              <Button onClick={() => router.push(`/items/edit/${item.id}`)}>Edit</Button>
+              <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            </>
+          ) : (
+            <Button variant="outline">Contact Seller</Button>
+          )}
+        </CardFooter>
+      </Card>
     </div>
   )
 }
