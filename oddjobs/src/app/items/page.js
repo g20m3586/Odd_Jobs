@@ -23,9 +23,10 @@ export default function ItemsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const getImageUrl = (filename) => {
-    if (!filename) return null
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/item-images/public/${filename}`
+  const getImageUrl = (path) => {
+    if (!path) return null
+    const { data } = supabase.storage.from("item-images").getPublicUrl(path)
+    return data?.publicUrl || null
   }
 
   useEffect(() => {
