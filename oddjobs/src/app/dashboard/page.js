@@ -6,7 +6,7 @@ import StatCard from "@/components/dashboard/StatCard"
 import ActionCard from "@/components/dashboard/ActionCard"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowRight, Plus, Search } from "lucide-react"
+import { ArrowRight, Plus, Search, RefreshCcw } from "lucide-react"
 import {
   BriefcaseIcon,
   UserIcon,
@@ -69,102 +69,102 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
 
-        if (authError) throw authError
+      if (authError || !user) throw authError
+      setUser(user)
 
-        setUser(user)
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single()
 
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single()
+      if (profileError || !profile) throw profileError
+      setProfile(profile)
 
-          if (profileError) throw profileError
+      const [{ count: jobCount }, appsRes, paymentsRes] = await Promise.all([
+        supabase
+          .from("jobs")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
 
-          setProfile(profile)
-
-          // Get job count
-          const { count: jobsCount } = await supabase
-            .from("jobs")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-
-          // Get applications count and earnings if business
-          let applications = 0
-          let earnings = 0
-          if (profile?.role === "business") {
-            const { count: appsCount } = await supabase
+        profile.role === "business"
+          ? supabase
               .from("applications")
               .select("*", { count: "exact", head: true })
               .eq("business_id", user.id)
-            applications = appsCount || 0
+          : supabase
+              .from("applications")
+              .select("*", { count: "exact", head: true })
+              .eq("user_id", user.id),
 
-            const { data: payments } = await supabase
+        profile.role === "business"
+          ? supabase
               .from("payments")
               .select("amount")
               .eq("recipient_id", user.id)
-            earnings = payments?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
-          }
+          : supabase
+              .from("payments")
+              .select("amount")
+              .eq("user_id", user.id),
+      ])
 
-          // Profile completeness (name, email, phone, avatar)
-          const fields = [profile?.name, profile?.email, profile?.phone, profile?.avatar_url]
-          const completeCount = fields.filter(Boolean).length
+      const earnings = paymentsRes.data?.reduce(
+        (acc, cur) => acc + (cur.amount || 0),
+        0
+      ) || 0
 
-          setStats({
-            jobCount: jobsCount || 0,
-            applications,
-            earnings,
-            profileComplete: Math.round((completeCount / fields.length) * 100),
-          })
+      const completeFields = [
+        profile.name,
+        profile.email,
+        profile.phone,
+        profile.avatar_url,
+      ]
+      const completeCount = completeFields.filter(Boolean).length
 
-          // Fetch recent activities (latest 5)
-          const { data: activitiesData, error: activitiesError } = await supabase
-            .from("activities")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(5)
+      setStats({
+        jobCount: jobCount || 0,
+        applications: appsRes.count || 0,
+        earnings,
+        profileComplete: Math.round((completeCount / completeFields.length) * 100),
+      })
 
-          if (activitiesError) throw activitiesError
-          setActivities(activitiesData || [])
-        }
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err)
-        setError(err.message || "Failed to load dashboard data")
-      } finally {
-        setLoading(false)
-      }
+      const { data: recentActivity } = await supabase
+        .from("activity_log")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      setActivities(recentActivity || [])
+    } catch (err) {
+      console.error(err)
+      setError("Failed to load dashboard. Please try again.")
+    } finally {
+      setLoading(false)
     }
-    fetchData()
+  }
+
+  useEffect(() => {
+    fetchDashboardData()
   }, [])
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-80" />
-        </div>
+      <div className="space-y-8 animate-pulse">
+        <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-36 rounded-xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[...Array(2)].map((_, i) => (
-            <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
         </div>
       </div>
@@ -174,43 +174,42 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl border border-red-100 dark:border-red-900/30">
+        <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border">
           {error}
         </div>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
+        <Button onClick={fetchDashboardData}>
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
       </div>
     )
   }
 
-  if (!user || !profile) {
-    return <div>Loading...</div>
-  }
-
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome back, {profile.name}!
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400">
-          Here is what is happening with your account today.
-        </p>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {profile.name}!
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Here’s your snapshot overview.
+          </p>
+        </div>
+        <Button onClick={fetchDashboardData} variant="outline" className="text-sm">
+          <RefreshCcw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Profile Completeness"
           value={`${stats.profileComplete}%`}
-          icon={<UserIcon className="w-6 h-6 text-white" />}
+          icon="User"
           trend={
-            stats.profileComplete > 80
-              ? "up"
-              : stats.profileComplete > 50
-              ? "neutral"
-              : "down"
+            stats.profileComplete > 80 ? "up" : stats.profileComplete > 50 ? "neutral" : "down"
           }
           variant={
             stats.profileComplete < 50
@@ -223,53 +222,32 @@ export default function DashboardPage() {
         <StatCard
           title="My Jobs"
           value={stats.jobCount}
-          subtitle={stats.jobCount === 1 ? "Job" : "Jobs"}
-          icon={<BriefcaseIcon className="w-6 h-6 text-white" />}
+          subtitle="Open Listings"
+          icon="Briefcase"
           trend="up"
         />
-        {profile.role === "business" ? (
-          <>
-            <StatCard
-              title="Applications"
-              value={stats.applications}
-              subtitle={stats.applications === 1 ? "Application" : "Applications"}
-              icon={<InboxIcon className="w-6 h-6 text-white" />}
-              trend="up"
-            />
-            <StatCard
-              title="Total Earnings"
-              value={`$${stats.earnings.toFixed(2)}`}
-              icon={<CurrencyDollarIcon className="w-6 h-6 text-white" />}
-              trend="up"
-            />
-          </>
-        ) : (
-          <>
-            <StatCard
-              title="Account Type"
-              value={profile.role === "business" ? "Business" : "Freelancer"}
-              icon={<UserIcon className="w-6 h-6 text-white" />}
-            />
-            <StatCard
-              title="Last Login"
-              value={
-                user.last_sign_in_at
-                  ? new Date(user.last_sign_in_at).toLocaleDateString()
-                  : "N/A"
-              }
-              icon={<ClockIcon className="w-6 h-6 text-white" />}
-            />
-          </>
-        )}
+        <StatCard
+          title="Applications"
+          value={stats.applications}
+          subtitle={profile.role === "business" ? "Received" : "Submitted"}
+          icon="Inbox"
+          trend="up"
+        />
+        <StatCard
+          title="Earnings"
+          value={`$${stats.earnings.toFixed(2)}`}
+          icon="DollarSign"
+          trend="up"
+        />
       </div>
 
-      {/* Quick Actions */}
+      {/* Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ActionCard
-          title="Complete Profile"
-          description={`${stats.profileComplete}% completed - Finish your setup`}
+          title="Complete Your Profile"
+          description="Complete your setup to get better visibility"
           href="/dashboard/profile"
-          icon={<UserIcon className="w-6 h-6" />}
+          icon="User"
           variant={
             stats.profileComplete < 50
               ? "destructive"
@@ -277,22 +255,22 @@ export default function DashboardPage() {
               ? "warning"
               : "success"
           }
-          actionText="Complete Now"
         />
         <ActionCard
-          title={profile.role === "business" ? "Post New Job" : "Browse Jobs"}
+          title={profile.role === "business" ? "Post a New Job" : "Find Jobs"}
           description={
-            profile.role === "business" ? "Create a new job listing" : "Find available jobs"
+            profile.role === "business"
+              ? "List a job and receive applications"
+              : "Explore jobs that match your skillset"
           }
           href={profile.role === "business" ? "/jobs/post" : "/jobs"}
-          icon={profile.role === "business" ? <Plus className="w-6 h-6" /> : <Search className="w-6 h-6" />}
-          actionText={profile.role === "business" ? "Post Job" : "Browse"}
+          icon={profile.role === "business" ? "Plus" : "Search"}
         />
       </div>
 
-      {/* Recent Activity Section */}
-      <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-6">
+      {/* Activity */}
+      <section className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
           <Button variant="ghost" className="text-blue-600 dark:text-blue-400">
             View All <ArrowRight className="ml-2 h-4 w-4" />
@@ -300,7 +278,7 @@ export default function DashboardPage() {
         </div>
         <div className="space-y-4">
           {activities.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No recent activity</p>
+            <p className="text-sm text-muted-foreground">No recent activity</p>
           ) : (
             activities.map((activity) => {
               const typeInfo = activityTypeMap[activity.type] || activityTypeMap.default
@@ -316,7 +294,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {activity.description || typeInfo.label}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{timeAgo}</p>
+                    <p className="text-sm text-muted-foreground">{timeAgo}</p>
                   </div>
                 </div>
               )
