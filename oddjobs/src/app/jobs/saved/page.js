@@ -81,7 +81,7 @@ export default function SavedJobsPage() {
       {jobs.length === 0 ? (
         <div className="text-center py-16 border rounded-lg">
           <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold">You haven't saved any jobs yet</h3>
+          <h3 className="text-lg font-semibold">You haven&apos;t saved any jobs yet</h3>
           <p className="text-muted-foreground mt-2 mb-4">Browse jobs and save the ones that interest you.</p>
           <Button asChild>
             <Link href="/jobs">Browse Jobs</Link>
