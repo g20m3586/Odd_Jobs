@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/client"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react"
 const VALID_CONDITIONS = ["new", "like_new", "good", "fair", "poor"]
 const DEFAULT_CONDITION = "good"
 
-export default function PostItemPage() {
+function PostItemForm() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -108,7 +108,7 @@ export default function PostItemPage() {
 
       const trimmedTitle = formData.title.trim()
 
-      // ❌ Prevent duplicate title for this user
+      // Prevent duplicate title
       const { data: existingItems } = await supabase
         .from("items")
         .select("id")
@@ -131,7 +131,6 @@ export default function PostItemPage() {
         created_at: new Date().toISOString(),
       }
 
-      // 🖼️ Upload image if provided
       if (image) {
         const ext = image.name.split(".").pop()
         const fileName = `${user.id}-${Date.now()}.${ext}`
@@ -154,7 +153,7 @@ export default function PostItemPage() {
             .from("item-images")
             .getPublicUrl(filePath)
 
-          newItem.image_url = fileName // Store just filename
+          newItem.image_url = fileName
         } finally {
           toast.dismiss(uploadToast)
         }
@@ -176,7 +175,6 @@ export default function PostItemPage() {
       }
     } catch (error) {
       console.error("Submission Error:", error)
-
       if (
         error.message?.includes('violates check constraint "items_condition_check"')
       ) {
@@ -316,5 +314,13 @@ export default function PostItemPage() {
         </Button>
       </form>
     </div>
+  )
+}
+
+export default function PostItemPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">Loading...</div>}>
+      <PostItemForm />
+    </Suspense>
   )
 }
