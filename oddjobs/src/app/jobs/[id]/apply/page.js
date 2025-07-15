@@ -5,11 +5,11 @@ import { supabase } from '@/lib/supabase/client'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { use } from 'react'
 
-export default function ApplyPage({ params: paramsPromise }) {
+
+export default function ApplyPage({ params }) {
   
-  const params = use(paramsPromise)
+  
   const [coverLetter, setCoverLetter] = useState('')
   const [loading, setLoading] = useState(false)
   const [isOwner, setIsOwner] = useState(false)

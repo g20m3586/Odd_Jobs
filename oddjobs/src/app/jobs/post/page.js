@@ -35,56 +35,58 @@ export default function PostJobPage() {
     'Other'
   ]
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+const handleSubmit = async (e) => {
+  e.preventDefault()
+  setLoading(true)
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
 
-      // Validate required fields
-      if (!formData.title.trim() || !formData.description.trim() || !formData.price) {
-        throw new Error('Please fill all required fields')
-      }
-
-      const jobData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        price: parseFloat(formData.price),
-        category: formData.category,
-        deadline: formData.deadline || null,
-        user_id: user.id,
-        status: 'open',
-        address: formData.address.trim() || null,
-        is_featured: false // default value, can be changed later
-      }
-
-      // Upload image if present
-      if (image) {
-        // Create unique file name
-        const fileExt = image.name.split('.').pop()
-        const fileName = `${Date.now()}.${fileExt}`
-        const { data: imageData, error: uploadError } = await supabase.storage
-          .from('job-images')
-          .upload(`public/${fileName}`, image)
-
-        if (uploadError) throw uploadError
-        jobData.image_url = imageData.path
-      }
-
-      const { error } = await supabase.from('jobs').insert(jobData)
-
-      if (error) throw error
-
-      toast.success('Job posted successfully!')
-      router.push('/jobs/myjobs') // Redirect to MyJobs page
-    } catch (error) {
-      toast.error('Error posting job', { description: error.message })
-    } finally {
-      setLoading(false)
+    if (!formData.title.trim() || !formData.description.trim() || !formData.price) {
+      throw new Error('Please fill all required fields')
     }
+
+    const jobData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      price: parseFloat(formData.price),
+      category: formData.category,
+      deadline: formData.deadline || null,
+      user_id: user.id,
+      status: 'open',
+      address: formData.address.trim() || null,
+      is_featured: false
+    }
+
+    // Upload image if present
+    if (image) {
+      const fileExt = image.name.split('.').pop()
+      const fileName = `${Date.now()}.${fileExt}`
+      const { data: imageData, error: uploadError } = await supabase.storage
+        .from('job-images')
+        .upload(`public/${fileName}`, image)
+
+      if (uploadError) throw uploadError
+      jobData.image_url = imageData.path
+    }
+
+    // Insert job
+    const { error } = await supabase.from('jobs').insert(jobData)
+    if (error) throw error
+
+    toast.success("Job posted successfully! Redirecting to My Jobs page...")
+
+    setTimeout(() => {
+      router.push('/jobs/myjobs')
+    }, 2000)
+  } catch (error) {
+    toast.error("Error posting job", { description: error.message })
+  } finally {
+    setLoading(false)
   }
+}
+
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {

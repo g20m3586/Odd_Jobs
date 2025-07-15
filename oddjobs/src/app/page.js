@@ -1,217 +1,193 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Search, CheckCircle2, Zap, Briefcase, Layers } from "lucide-react"
+import { CheckCircle2, Search, Sparkles } from "lucide-react"
 
-export default function Home() {
+const avatars = [
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=c91d61f2-3fe6-4625-b00b-e3c68619466a",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=8d71f909-f51b-402d-abee-f05b68b371ca",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=58ab04f5-46b8-4283-97a3-6dfa3283c7c1",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=fbedca81-db33-4bcf-acf6-a26c5bc73209",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=0e74be01-cee8-40db-86a6-cfe9061d1b30",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=e64b1911-bffc-4d79-b248-b73ad20475c2",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=732a6552-e9f0-4c5b-992e-66363ec7877d",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=ccf05b74-2439-4496-b1de-e594d623e784",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=7a9370e0-f9d7-4e40-a8aa-7f1025668e79",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=a492e554-d389-43e8-9ecf-ee982780392d",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=3586bb74-31a6-4c6a-930a-11bea2c91c3d",
+  "https://api.dicebear.com/8.x/avataaars/svg?seed=3f10062c-31fa-4058-aa90-99c15b76c01c"
+]
+
+export default function HomePage() {
   const [query, setQuery] = useState("")
-  
+  const router = useRouter()
+
   const handleSearch = (e) => {
     e.preventDefault()
     if (!query.trim()) return
-    // Assuming you want to route to jobs page with search query
-    window.location.href = `/jobs?search=${encodeURIComponent(query.trim())}`
+    router.push(`/jobs?search=${encodeURIComponent(query.trim())}`)
   }
 
-  const popularTags = [
-    "Logo Design",
-    "WordPress",
-    "Voice Over",
-    "Social Media",
-  ]
-
-  const trustedBy = [
-    "Netflix",
-    "Google",
-    "Meta",
-    "PayPal",
-    "Microsoft",
-  ]
-
-  const popularServices = [
-    { 
-      name: "Build your brand", 
-      description: "Logo design", 
-      icon: <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
-    },
-    { 
-      name: "Customize your site", 
-      description: "WordPress", 
-      icon: <Layers className="w-16 h-16 text-primary mx-auto" />
-    },
-    { 
-      name: "Share your message", 
-      description: "Voice Over", 
-      icon: <Zap className="w-16 h-16 text-primary mx-auto" />
-    },
-    { 
-      name: "Engage your audience", 
-      description: "Social Media", 
-      icon: <Briefcase className="w-16 h-16 text-primary mx-auto" />
-    },
-  ]
-
-  const sellerShowcase = [
-    {
-      title: "The best for every budget",
-      description:
-        "Find high-quality services at every price point. No hourly rates, just project-based pricing.",
-      icon: <CheckCircle2 className="w-12 h-12 text-primary" />,
-    },
-    {
-      title: "Quality work done quickly",
-      description: "Find the right freelancer to begin working on your project within minutes.",
-      icon: <Zap className="w-12 h-12 text-primary" />,
-    },
-  ]
-
-  const categories = [
-    { name: "Graphics & Design", icon: <CheckCircle2 /> },
-    { name: "Digital Marketing", icon: <Search /> },
-    { name: "Writing & Translation", icon: <Briefcase /> },
-    { name: "Video & Animation", icon: <Zap /> },
-    { name: "Music & Audio", icon: <Layers /> },
-    { name: "Programming & Tech", icon: <CheckCircle2 /> },
-    { name: "Business", icon: <Briefcase /> },
-    { name: "Lifestyle", icon: <Zap /> },
-    { name: "Data", icon: <Search /> },
-    { name: "Photography", icon: <Layers /> },
-    { name: "AI Services", icon: <CheckCircle2 /> },
-    { name: "Trending", icon: <Zap /> },
-  ]
-
   return (
-    <main className="flex flex-col min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {/* Hero Section */}
-      <section className="w-full bg-gradient-to-r from-primary/10 to-secondary/10 py-20">
-        <div className="container mx-auto px-4 md:px-6 text-center max-w-4xl space-y-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
-            <span className="text-primary">Find</span> the perfect freelance services for your business
+    <main className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
+      {/* Hero */}
+      <section className="py-24 text-center bg-gradient-to-br from-primary/10 to-secondary/10">
+        <div className="container px-4 max-w-4xl mx-auto space-y-6">
+          <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
+            Hire smarter. Work faster. <br />
+            <span className="text-primary">ODDJobs connects freelancers and clients seamlessly.</span>
           </h1>
-          <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            A modern freelance marketplace to find and offer high-quality services in minutes.
+          </p>
+          <form onSubmit={handleSearch} className="relative max-w-xl mx-auto mt-6">
             <input
               type="text"
-              aria-label="Search for services"
-              placeholder="What service are you looking for today?"
+              placeholder="Search jobs or services"
+              className="w-full py-4 px-6 rounded-full border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm pr-32 text-lg"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full px-6 py-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm pr-32 text-lg transition"
             />
             <Button
               type="submit"
-              className="absolute right-2 top-2 px-8 py-3 text-lg rounded-full hover:scale-105 transition-transform"
-              aria-label="Search"
+              className="absolute top-1.5 right-2 px-6 py-2 rounded-full"
             >
-              <Search className="w-5 h-5 mr-2" />
+              <Search className="w-4 h-4 mr-1" />
               Search
             </Button>
           </form>
-          <div className="flex flex-wrap justify-center gap-3 pt-4">
-            {popularTags.map((tag) => (
-              <Button
-                key={tag}
-                variant="outline"
-                size="sm"
-                className="rounded-full px-5 hover:bg-primary hover:text-white transition"
-                onClick={() => {
-                  setQuery(tag)
-                  // optionally trigger search immediately or leave for manual click
-                }}
-                aria-label={`Search for ${tag}`}
-              >
-                {tag}
-              </Button>
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* Trusted By Section */}
-      <section className="py-8">
-        <div className="container mx-auto px-4 md:px-6">
-          <p className="text-center text-muted-foreground text-sm mb-6">Trusted by</p>
-          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-16 opacity-70">
-            {trustedBy.map((company) => (
-              <span
-                key={company}
-                className="text-lg font-semibold text-gray-600 dark:text-gray-400 select-none"
-                aria-label={company}
-                title={company}
-              >
-                {company}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Services */}
-      <section className="container mx-auto px-4 md:px-6 py-16">
-        <h2 className="text-3xl font-extrabold mb-10 text-center">Popular professional services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          {popularServices.map(({ name, description, icon }) => (
+      {/* Services */}
+      <section className="py-16 container mx-auto px-4">
+        <h2 className="text-3xl font-bold mb-10 text-center">Top Freelance Services</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {["Web Development", "Logo Design", "Social Media", "Content Writing", "Translation", "Virtual Assistance", "Voice Over", "SEO"].map((service, i) => (
             <Link
-              key={name}
-              href="/jobs"
-              className="group bg-gray-100 dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center hover:shadow-lg transition-shadow"
-              aria-label={`${name}: ${description}`}
+              key={i}
+              href={`/jobs?search=${service}`}
+              className="p-6 border rounded-lg hover:shadow-md text-center transition"
             >
-              <div className="mb-6">{icon}</div>
-              <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">{name}</h3>
-              <p className="text-muted-foreground text-center">{description}</p>
+              <Sparkles className="mx-auto text-primary mb-4" />
+              <h3 className="font-semibold">{service}</h3>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Seller Showcase */}
-      <section className="bg-gray-50 dark:bg-gray-800 py-16">
-        <div className="container mx-auto px-4 md:px-6 max-w-4xl text-center">
-          <h2 className="text-3xl font-extrabold mb-8">A whole world of freelance talent at your fingertips</h2>
-          <div className="grid md:grid-cols-2 gap-12 text-left mt-10">
-            {sellerShowcase.map(({ title, description, icon }, i) => (
-              <div key={i} className="flex gap-6">
-                <div className="text-primary">{icon}</div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">{title}</h3>
-                  <p className="text-muted-foreground">{description}</p>
-                </div>
+      {/* Value Propositions */}
+      <section className="bg-zinc-50 dark:bg-zinc-800 py-20">
+        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 text-left max-w-5xl">
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Why choose ODDJobs?</h2>
+            <p className="text-muted-foreground mb-6">
+              Our platform is tailored to give businesses access to reliable, skilled freelancers in record time.
+            </p>
+            <ul className="space-y-4 text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="text-green-500" />
+                No commission fees.
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="text-green-500" />
+                Secure payments with escrow.
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="text-green-500" />
+                Verified freelancers and projects.
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold mb-4">ODDJobs is trusted by modern startups</h3>
+            <p className="text-muted-foreground">
+              Whether you’re building a website or scaling your brand, we help you find the right people to get it done.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="py-20 container mx-auto px-4">
+        <h2 className="text-3xl font-bold mb-12 text-center">Simple, transparent pricing</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          {[{ title: "Free", price: "$0", features: ["Browse jobs", "Apply to listings", "Build your profile"] },
+            { title: "Pro", price: "$12/mo", features: ["Priority listings", "Advanced filters", "Analytics dashboard"] },
+            { title: "Business", price: "$29/mo", features: ["Team hiring tools", "Direct freelancer invites", "Dedicated support"] }
+          ].map((plan, i) => (
+            <div key={i} className="border rounded-xl p-8 shadow-sm hover:shadow-lg transition">
+              <h3 className="text-xl font-bold mb-2">{plan.title}</h3>
+              <p className="text-3xl font-extrabold mb-4">{plan.price}</p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {plan.features.map((f, i) => (
+                  <li key={i} className="flex items-center justify-center gap-2">
+                    <CheckCircle2 className="text-green-500 w-4 h-4" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Top Freelancers */}
+      <section className="bg-zinc-100 dark:bg-zinc-800 py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-10 text-center">Meet our top freelancers</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {avatars.map((src, i) => (
+              <div key={i} className="text-center space-y-2">
+                <img
+                  src={src}
+                  alt={`Freelancer ${i + 1}`}
+                  className="w-20 h-20 rounded-full mx-auto border-2 border-primary"
+                />
+                <p className="font-medium">Freelancer {i + 1}</p>
+                <p className="text-sm text-muted-foreground">Top-rated seller</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Category Showcase */}
-      <section className="container mx-auto px-4 md:px-6 py-16">
-        <h2 className="text-3xl font-extrabold mb-10 text-center">Browse by category</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {categories.map(({ name, icon }) => (
-            <Link
-              key={name}
-              href={`/jobs?category=${encodeURIComponent(name.toLowerCase())}`}
-              className="border rounded-lg p-6 flex flex-col items-center hover:shadow-lg transition-shadow cursor-pointer"
-              aria-label={`Browse jobs in ${name} category`}
-            >
-              <div className="text-primary mb-3">{icon}</div>
-              <h3 className="font-semibold text-center">{name}</h3>
-            </Link>
+      {/* Testimonials */}
+      <section className="py-20 container mx-auto px-4">
+        <h2 className="text-3xl font-bold mb-12 text-center">What people are saying</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[{
+            quote: "ODDJobs helped me find a web developer in under 10 minutes. Incredible!",
+            name: "Lebo M.",
+            title: "Startup Founder"
+          }, {
+            quote: "I earn consistently through this platform. Clients trust me here.",
+            name: "Nate S.",
+            title: "Freelance Designer"
+          }, {
+            quote: "The hiring process is so easy — we use it every month.",
+            name: "Jess T.",
+            title: "Operations Lead"
+          }].map((t, i) => (
+            <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow border">
+              <p className="italic mb-4">"{t.quote}"</p>
+              <p className="font-semibold">{t.name}</p>
+              <p className="text-sm text-muted-foreground">{t.title}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-primary/10 py-20">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h2 className="text-4xl font-extrabold mb-8">
-            Find the talent needed to get your business growing.
-          </h2>
-          <Button asChild size="lg" className="px-12 py-6 text-lg hover:scale-105 transition-transform shadow-lg">
-            <Link href="/auth/signup" aria-label="Get started now">
-              Get Started
-            </Link>
+      {/* Final CTA */}
+      <section className="bg-primary text-white py-20 text-center">
+        <div className="container px-4 mx-auto space-y-4">
+          <h2 className="text-4xl font-extrabold">Ready to start?</h2>
+          <p className="text-lg">Create your profile or post your first job — it only takes a minute.</p>
+          <Button asChild size="lg" className="bg-white text-primary font-semibold hover:scale-105 transition-transform">
+            <Link href="/auth/signup">Get Started</Link>
           </Button>
         </div>
       </section>
