@@ -7,6 +7,7 @@ import { supabase } from "@/lib/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useSearchParams } from 'next/navigation'
 import {
   Card, CardHeader, CardTitle, CardDescription,
   CardContent, CardFooter
@@ -37,6 +38,15 @@ export default function JobsPage() {
     jobType: "any",
   })
   const [activeTab, setActiveTab] = useState("all")
+  useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search)
+  const search = searchParams.get("search")
+
+  if (search) {
+    setFilters((prev) => ({ ...prev, search }))
+    setActiveTab("all") // optional
+  }
+}, [])
 
   useEffect(() => {
     const fetchJobs = async () => {

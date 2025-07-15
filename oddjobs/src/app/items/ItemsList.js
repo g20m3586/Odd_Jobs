@@ -20,8 +20,24 @@ export default function ItemsList() {
 
   const getImageUrl = (path) => {
     if (!path) return null
-    const { data } = supabase.storage.from("item-images").getPublicUrl(path)
-    return data?.publicUrl || null
+    
+    try {
+      // Handle full URLs (if already formatted)
+      if (path.startsWith('http')) return path
+      
+      // Handle paths that might include the bucket name
+      const cleanPath = path.replace(/^item-images\//, '').replace(/^public\//, '')
+      
+      const { data } = supabase
+        .storage
+        .from('item-images')
+        .getPublicUrl(cleanPath)
+      
+      return data?.publicUrl || null
+    } catch (error) {
+      console.error('Error generating image URL:', error)
+      return null
+    }
   }
 
   useEffect(() => {
@@ -34,14 +50,39 @@ export default function ItemsList() {
 
         if (error) throw error
 
-        const enriched = data.map(item => ({
-          ...item,
-          image_url: item.image_url ? getImageUrl(item.image_url) : null
-        }))
+        const enriched = await Promise.all(
+          data.map(async (item) => {
+            let imageUrl = null
+            if (item.image_url) {
+              imageUrl = getImageUrl(item.image_url)
+              
+              // Optional: Verify the image exists
+              if (imageUrl) {
+                const img = new Image()
+                img.src = imageUrl
+                await new Promise((resolve) => {
+                  img.onload = resolve
+                  img.onerror = () => {
+                    console.warn('Image failed to load:', imageUrl)
+                    imageUrl = null
+                    resolve()
+                  }
+                })
+              }
+            }
+            
+            return {
+              ...item,
+              image_url: imageUrl
+            }
+          })
+        )
 
         setItems(enriched)
       } catch (err) {
-        toast.error('Failed to load items', { description: err.message })
+        toast.error('Failed to load items', { 
+          description: err.message 
+        })
       } finally {
         setLoading(false)
       }
@@ -49,6 +90,9 @@ export default function ItemsList() {
 
     fetchItems()
   }, [])
+
+  // ... rest of your component code remains the same ...
+
 
   useEffect(() => {
     if (searchParams.get('posted') === '1') {

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, Search, Sparkles } from "lucide-react"
@@ -22,11 +23,12 @@ const avatars = [
 
 export default function HomePage() {
   const [query, setQuery] = useState("")
+  const router = useRouter()
 
   const handleSearch = (e) => {
     e.preventDefault()
     if (!query.trim()) return
-    window.location.href = `/jobs?search=${encodeURIComponent(query.trim())}`
+    router.push(`/jobs?search=${encodeURIComponent(query.trim())}`)
   }
 
   return (
@@ -113,8 +115,7 @@ export default function HomePage() {
       <section className="py-20 container mx-auto px-4">
         <h2 className="text-3xl font-bold mb-12 text-center">Simple, transparent pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          {[
-            { title: "Free", price: "$0", features: ["Browse jobs", "Apply to listings", "Build your profile"] },
+          {[{ title: "Free", price: "$0", features: ["Browse jobs", "Apply to listings", "Build your profile"] },
             { title: "Pro", price: "$12/mo", features: ["Priority listings", "Advanced filters", "Analytics dashboard"] },
             { title: "Business", price: "$29/mo", features: ["Team hiring tools", "Direct freelancer invites", "Dedicated support"] }
           ].map((plan, i) => (
@@ -158,23 +159,19 @@ export default function HomePage() {
       <section className="py-20 container mx-auto px-4">
         <h2 className="text-3xl font-bold mb-12 text-center">What people are saying</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              quote: "ODDJobs helped me find a web developer in under 10 minutes. Incredible!",
-              name: "Lebo M.",
-              title: "Startup Founder"
-            },
-            {
-              quote: "I earn consistently through this platform. Clients trust me here.",
-              name: "Nate S.",
-              title: "Freelance Designer"
-            },
-            {
-              quote: "The hiring process is so easy — we use it every month.",
-              name: "Jess T.",
-              title: "Operations Lead"
-            }
-          ].map((t, i) => (
+          {[{
+            quote: "ODDJobs helped me find a web developer in under 10 minutes. Incredible!",
+            name: "Lebo M.",
+            title: "Startup Founder"
+          }, {
+            quote: "I earn consistently through this platform. Clients trust me here.",
+            name: "Nate S.",
+            title: "Freelance Designer"
+          }, {
+            quote: "The hiring process is so easy — we use it every month.",
+            name: "Jess T.",
+            title: "Operations Lead"
+          }].map((t, i) => (
             <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow border">
               <p className="italic mb-4">"{t.quote}"</p>
               <p className="font-semibold">{t.name}</p>
