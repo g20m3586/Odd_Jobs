@@ -129,12 +129,12 @@ export default function JobsPage() {
     <div className="container py-8 px-4 mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Find Your Next Opportunity</h1>
-          <p className="text-muted-foreground mt-1">
-            Browse {jobs.length} {jobs.length === 1 ? "job" : "jobs"} matching your filters
-          </p>
-        </div>
+<div className="mb-8">
+  <h1 className="text-3xl font-bold">Find Your Next Opportunity</h1>
+  <p className="text-muted-foreground mt-1">
+    Browse and filter through available jobs in your area of expertise
+  </p>
+</div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link href="/jobs/saved">Saved Jobs</Link>

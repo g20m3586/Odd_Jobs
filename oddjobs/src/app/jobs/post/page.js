@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 export default function PostJobPage() {
+  const [preview, setPreview] = useState(false)
   const router = useRouter()
   const [formData, setFormData] = useState({
     title: '',
@@ -21,9 +22,7 @@ export default function PostJobPage() {
     address: ''
   })
   const [loading, setLoading] = useState(false)
-  const [image, setImage] = useState(null)
 
-  // Categories matching your jobs page
   const categories = [
     'Design',
     'Development',
@@ -35,68 +34,60 @@ export default function PostJobPage() {
     'Other'
   ]
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  setLoading(true)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
 
-    if (!formData.title.trim() || !formData.description.trim() || !formData.price) {
-      throw new Error('Please fill all required fields')
-    }
+      if (!formData.title.trim() || !formData.description.trim() || !formData.price) {
+        throw new Error('Please fill all required fields')
+      }
 
-    const jobData = {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      price: parseFloat(formData.price),
-      category: formData.category,
-      deadline: formData.deadline || null,
-      user_id: user.id,
-      status: 'open',
-      address: formData.address.trim() || null,
-      is_featured: false
-    }
+      const { data, error } = await supabase.from('jobs').insert({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        category: formData.category,
+        deadline: formData.deadline || null,
+        user_id: user.id,
+        status: 'open',
+        address: formData.address.trim() || null,
+        is_featured: false
+      }).select().single()
 
-    // Upload image if present
-    if (image) {
-      const fileExt = image.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const { data: imageData, error: uploadError } = await supabase.storage
-        .from('job-images')
-        .upload(`public/${fileName}`, image)
+      if (error) throw error
 
-      if (uploadError) throw uploadError
-      jobData.image_url = imageData.path
-    }
+      // Success toast with action button
+      toast.success("Job posted successfully!", {
+        description: "Your job is now live and visible to applicants.",
+        action: {
+          label: "View Job",
+          onClick: () => router.push(`/jobs/${data.id}`)
+        },
+        duration: 10000
+      })
+      setTimeout(() => router.push('/jobs/myjobs'), 3000)
 
-    // Insert job
-    const { error } = await supabase.from('jobs').insert(jobData)
-    if (error) throw error
-
-    toast.success("Job posted successfully! Redirecting to My Jobs page...")
-
-    setTimeout(() => {
-      router.push('/jobs/myjobs')
-    }, 2000)
-  } catch (error) {
-    toast.error("Error posting job", { description: error.message })
-  } finally {
-    setLoading(false)
-  }
-}
-
-
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0])
+    } catch (error) {
+      // Error toast
+      toast.error("Failed to post job", {
+        description: error.message,
+        duration: 5000
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className="container py-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Post a New Job</h1>
+<h1 className="text-3xl font-bold mb-2">Post a New Job</h1>
+<p className="text-muted-foreground mb-6">
+  Fill out the form below to create your job listing
+</p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
@@ -177,19 +168,10 @@ const handleSubmit = async (e) => {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="image">Image (optional)</Label>
-          <Input
-            id="image"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-          />
-        </div>
-
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Posting...' : 'Post Job'}
         </Button>
+        
       </form>
     </div>
   )
