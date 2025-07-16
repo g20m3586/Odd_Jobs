@@ -3,13 +3,9 @@ import './globals.css'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
-
-// export const metadata = {
-//   title: 'ODDJobs - Freelance Services Marketplace',
-//   description: 'Find and offer freelance services for any project',
-// }
 
 export default function RootLayout({ children }) {
   return (
@@ -26,6 +22,7 @@ export default function RootLayout({ children }) {
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>
