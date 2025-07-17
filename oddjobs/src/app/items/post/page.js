@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
+import Image from "next/image"
 
 const VALID_CONDITIONS = ["new", "like_new", "good", "fair", "poor"]
 const DEFAULT_CONDITION = "good"
@@ -283,10 +284,12 @@ function PostItemForm() {
           <Label htmlFor="image">Image (optional)</Label>
           {imagePreview && (
             <div className="mb-2">
-              <img
+              <Image
                 src={imagePreview}
                 alt="Preview"
                 className="h-40 object-cover rounded-md border"
+                width={160}
+                height={160}
               />
             </div>
           )}
