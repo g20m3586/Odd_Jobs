@@ -89,7 +89,7 @@ export default function HomePage() {
           <div className="p-2 hover:bg-zinc-100 cursor-pointer">Web Designer in New York</div>
           <div className="p-2 hover:bg-zinc-100 cursor-pointer">Mobile App Developer</div>
           <div className="p-2 hover:bg-zinc-100 cursor-pointer">Content Writer ($50-$100)</div>
-          <div className="p-2 text-sm text-zinc-500">Press Enter to search "{query}"</div>
+          <div className="p-2 text-sm text-zinc-500">Press Enter to search &quot;{query}&quot;</div>
         </div>
       )}
 
@@ -165,8 +165,8 @@ export default function HomePage() {
           <div>
             <h3 className="text-xl font-semibold mb-4">ODDJobs is trusted by modern startups</h3>
             <p className="text-muted-foreground mb-6">
-              Whether you're building a website or scaling your brand, we help you find the right people to get it done.
-            </p>
+  {`Whether you're building a website or scaling your brand, we help you find the right people to get it done.`}
+</p>
             <div className="flex flex-wrap gap-4">
               {["Startup A", "Company B", "Brand C", "Agency D"].map((company, i) => (
                 <div key={i} className="px-4 py-2 bg-white dark:bg-zinc-700 rounded-lg shadow-sm">
