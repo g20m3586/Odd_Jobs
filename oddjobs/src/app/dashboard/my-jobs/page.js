@@ -28,44 +28,45 @@ export default function MyJobsPage() {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push("/login")
+          return
+        }
 
-      const { data, error } = await supabase
-        .from("jobs")
-        .select(`
-          id,
-          title,
-          created_at,
-          status,
-          applications:applications(id)
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+        const { data, error } = await supabase
+          .from("jobs")
+          .select(`
+            id,
+            title,
+            created_at,
+            status,
+            applications:applications(id)
+          `)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
 
-      if (error) {
-        toast.error("Failed to load your jobs")
-        console.error(error)
-      } else {
+        if (error) throw error
         setJobs(data || [])
+      } catch (error) {
+        toast.error("Failed to load your jobs", { description: error.message })
+        console.error(error)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     fetchJobs()
-  }, [])
+  }, [router])
 
-  const statusVariant = {
-    open: "default",
-    filled: "success",
-    expired: "destructive"
-  }
-
-  const statusIcon = {
-    open: <CheckCircle className="h-4 w-4 text-green-500" />,
-    filled: <UserCheck className="h-4 w-4 text-blue-500" />,
-    expired: <XCircle className="h-4 w-4 text-red-500" />
+  // Status configuration for consistent usage
+  const statusOptions = {
+    open: { label: "Open", variant: "default", icon: <CheckCircle className="h-4 w-4 text-green-500" /> },
+    filled: { label: "Filled", variant: "success", icon: <UserCheck className="h-4 w-4 text-blue-500" /> },
+    expired: { label: "Expired", variant: "destructive", icon: <XCircle className="h-4 w-4 text-red-500" /> },
+    in_progress: { label: "In Progress", variant: "secondary", icon: <CheckCircle className="h-4 w-4 text-yellow-500" /> },
+    completed: { label: "Completed", variant: "outline", icon: <CheckCircle className="h-4 w-4 text-purple-500" /> }
   }
 
   const filteredJobs = jobs.filter((job) => {
@@ -73,6 +74,14 @@ export default function MyJobsPage() {
     const matchesStatus = statusFilter === "all" || job.status === statusFilter
     return matchesSearch && matchesStatus
   })
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
 
   return (
     <div className="container py-8">
@@ -98,15 +107,17 @@ export default function MyJobsPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="flex items-center gap-1">
-              {statusFilter === "all" ? "All Statuses" : `Status: ${statusFilter}`}
+              {statusFilter === "all" ? "All Statuses" : statusOptions[statusFilter]?.label || statusFilter}
               <ChevronDown className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setStatusFilter("open")}>Open</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setStatusFilter("filled")}>Filled</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setStatusFilter("expired")}>Expired</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All Statuses</DropdownMenuItem>
+            {Object.entries(statusOptions).map(([key, { label }]) => (
+              <DropdownMenuItem key={key} onClick={() => setStatusFilter(key)}>
+                {label}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -119,7 +130,9 @@ export default function MyJobsPage() {
         </div>
       ) : filteredJobs.length === 0 ? (
         <div className="border rounded-lg p-8 text-center">
-          <p className="text-muted-foreground">No jobs found matching your filters.</p>
+          <p className="text-muted-foreground">
+            {jobs.length === 0 ? "You haven't posted any jobs yet." : "No jobs found matching your filters."}
+          </p>
         </div>
       ) : (
         <div className="rounded-md border overflow-x-auto">
@@ -130,35 +143,44 @@ export default function MyJobsPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Posted</TableHead>
                 <TableHead>Applications</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredJobs.map((job) => (
                 <TableRow key={job.id}>
-                  <TableCell className="font-semibold text-base text-primary">{job.title}</TableCell>
+                  <TableCell className="font-semibold text-base">
+                    <Link href={`/jobs/${job.id}`} className="hover:underline text-primary">
+                      {job.title}
+                    </Link>
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant[job.status]} className="flex items-center gap-1">
-                      {statusIcon[job.status]} {job.status}
+                    <Badge 
+                      variant={statusOptions[job.status]?.variant || "outline"} 
+                      className="flex items-center gap-1 capitalize"
+                    >
+                      {statusOptions[job.status]?.icon}
+                      {statusOptions[job.status]?.label || job.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(job.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatDate(job.created_at)}</TableCell>
                   <TableCell>{job.applications?.length || 0}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/dashboard/my-jobs/${job.id}/applications`)}
+                        onClick={() => router.push(`/dashboard/received-applications?job_id=${job.id}`)}
+                        disabled={job.applications?.length === 0}
                       >
-                        View Apps
+                        View Applications
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/jobs/${job.id}`)}
+                        onClick={() => router.push(`/dashboard/my-jobs/${job.id}/edit`)}
                       >
-                        View Job
+                        Edit
                       </Button>
                     </div>
                   </TableCell>

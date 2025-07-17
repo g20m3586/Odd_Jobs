@@ -29,11 +29,14 @@ export default function MyApplicationsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("You must be signed in")
 
+        // Fetch applications with both applicant and business info
         const { data, error } = await supabase
           .from("applications")
           .select(`
-            id, status, created_at, job: jobs (id, title, category, user_id, description),
-            business: profiles!jobs(user_id)
+            id, status, created_at, 
+            job:jobs(id, title, category, description),
+            applicant:profiles!user_id(name, email),
+            business:profiles!business_id(name)
           `)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
@@ -88,7 +91,7 @@ export default function MyApplicationsPage() {
       <h1 className="text-3xl font-bold mb-4">My Applications</h1>
 
       {applications.length === 0 ? (
-        <p className="text-muted-foreground">You haven’t applied to any jobs yet.</p>
+        <p className="text-muted-foreground">You haven't applied to any jobs yet.</p>
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
@@ -104,7 +107,7 @@ export default function MyApplicationsPage() {
                     </h3>
                   </Link>
                   <p className="text-sm text-muted-foreground">
-                    {app.business?.full_name || "Unknown Company"} •{" "}
+                    {app.business?.name || "Unknown Company"} •{" "}
                     {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
                   </p>
                 </div>
