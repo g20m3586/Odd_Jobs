@@ -30,18 +30,21 @@ export default function ApplicationDetailPage() {
         const { data: { user } } = await supabase.auth.getUser()
         setUserId(user?.id)
 
-        const { data, error } = await supabase
+        // First fetch application with job details
+        const { data: appData, error: appError } = await supabase
           .from("applications")
           .select(`
             id, status, created_at, cover_letter,
-            job: jobs (id, title, category, description, user_id),
-            business: profiles!jobs(user_id)
+            job:jobs(id, title, category, description),
+            applicant:profiles!user_id(*),
+            business:profiles!business_id(*)
           `)
           .eq("id", id)
           .single()
 
-        if (error || !data) throw error
-        setApplication(data)
+        if (appError || !appData) throw appError
+
+        setApplication(appData)
       } catch (err) {
         toast.error("Could not load application", { description: err.message })
         router.push("/applications")
@@ -88,7 +91,7 @@ export default function ApplicationDetailPage() {
         <div>
           <h1 className="text-2xl font-bold mb-1">{application.job?.title}</h1>
           <p className="text-muted-foreground text-sm capitalize">
-            {application.job?.category} • Posted by {application.business?.full_name || "Unknown"}
+            {application.job?.category} • Posted by {application.business?.name || "Unknown"}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Applied {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}
@@ -104,6 +107,28 @@ export default function ApplicationDetailPage() {
               Withdraw
             </Button>
           )}
+        </div>
+      </div>
+
+      <div className="border rounded-md p-4 bg-muted/40 space-y-3">
+        <h2 className="text-lg font-semibold">Applicant Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-medium">Name</h3>
+            <p>{application.applicant?.name || "Not provided"}</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Email</h3>
+            <p>{application.applicant?.email || "Not provided"}</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Location</h3>
+            <p>{application.applicant?.location || "Not provided"}</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Phone</h3>
+            <p>{application.applicant?.phone || "Not provided"}</p>
+          </div>
         </div>
       </div>
 

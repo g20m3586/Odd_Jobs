@@ -29,19 +29,32 @@ export default function ReceivedApplicationsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("You must be signed in")
 
+        // First get all jobs owned by this user
+        const { data: jobs, error: jobsError } = await supabase
+          .from("jobs")
+          .select("id")
+          .eq("user_id", user.id)
+
+        if (jobsError) throw jobsError
+        if (!jobs.length) {
+          setApplications([])
+          return
+        }
+
+        // Then get applications for those jobs
         const { data, error } = await supabase
           .from("applications")
           .select(`
-            id, status, created_at,
-            job: jobs (id, title, user_id),
-            applicant: profiles!applications(user_id)
+            id, status, created_at, cover_letter,
+            job:jobs(id, title),
+            applicant:profiles!user_id(id, name, email)
           `)
+          .in("job_id", jobs.map(j => j.id))
           .order("created_at", { ascending: false })
 
         if (error) throw error
 
-        const filtered = data.filter((app) => app.job?.user_id === user.id)
-        setApplications(filtered)
+        setApplications(data)
       } catch (error) {
         toast.error("Failed to load applications", { description: error.message })
       } finally {
@@ -102,7 +115,7 @@ export default function ReceivedApplicationsPage() {
                     </h3>
                   </Link>
                   <p className="text-sm text-muted-foreground">
-                    From: {app.applicant?.full_name || "Unknown"} •{" "}
+                    From: {app.applicant?.name || "Unknown"} •{" "}
                     {app.applicant?.email || "No email"} •{" "}
                     {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
                   </p>

@@ -20,7 +20,6 @@ const statusVariant = {
 export default function ReceivedApplicationDetailPage() {
   const { id } = useParams()
   const router = useRouter()
-
   const [application, setApplication] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -33,9 +32,9 @@ export default function ReceivedApplicationDetailPage() {
         const { data, error } = await supabase
           .from("applications")
           .select(`
-            *,
-            job: jobs (*),
-            applicant: profiles!applications(user_id)
+            id, status, created_at, cover_letter,
+            job:jobs(id, title, description, user_id),
+            applicant:profiles!user_id(id, name, email, phone, location)
           `)
           .eq("id", id)
           .single()
@@ -48,7 +47,6 @@ export default function ReceivedApplicationDetailPage() {
 
         setApplication(data)
       } catch (error) {
-        console.error(error)
         toast.error("Failed to load application", { description: error.message })
         router.push("/received-applications")
       } finally {
@@ -94,7 +92,7 @@ export default function ReceivedApplicationDetailPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">{job?.title}</h1>
         <p className="text-muted-foreground text-sm">
-          From: {applicant?.full_name || "Unknown"} •{" "}
+          From: {applicant?.name || "Unknown"} •{" "}
           {applicant?.email || "No email"} •{" "}
           {formatDistanceToNow(new Date(created_at), { addSuffix: true })}
         </p>
@@ -108,13 +106,27 @@ export default function ReceivedApplicationDetailPage() {
           </Badge>
         </div>
 
-        <div>
-          <h3 className="text-lg font-semibold mb-1">Cover Letter</h3>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{cover_letter}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Applicant Information</h3>
+            <div className="space-y-2 text-sm">
+              <p><span className="font-medium">Name:</span> {applicant?.name || "Not provided"}</p>
+              <p><span className="font-medium">Email:</span> {applicant?.email || "Not provided"}</p>
+              <p><span className="font-medium">Phone:</span> {applicant?.phone || "Not provided"}</p>
+              <p><span className="font-medium">Location:</span> {applicant?.location || "Not provided"}</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Cover Letter</h3>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+              {cover_letter || "No cover letter provided"}
+            </p>
+          </div>
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-1">Job Description</h3>
+          <h3 className="text-lg font-semibold mb-2">Job Description</h3>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">
             {job?.description || "No description provided"}
           </p>
