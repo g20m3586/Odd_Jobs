@@ -48,35 +48,38 @@ export default function JobsPage() {
   }
 }, [])
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        setLoading(true)
-        let query = supabase
-          .from("jobs")
-          .select("*")
-          .order("created_at", { ascending: false })
+useEffect(() => {
+  const fetchJobs = async () => {
+    try {
+      setLoading(true)
+      let query = supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .eq("status", "open") // 👈 Only open jobs
+        .or("deadline.is.null,deadline.gt." + new Date().toISOString()) // 👈 Deadline not passed or null
 
-        if (filters.search) query = query.ilike("title", `%${filters.search}%`)
-        if (filters.category !== "all") query = query.eq("category", filters.category)
-        if (filters.minPrice) query = query.gte("price", parseFloat(filters.minPrice))
-        if (filters.maxPrice) query = query.lte("price", parseFloat(filters.maxPrice))
-        if (filters.jobType !== "any") query = query.eq("job_type", filters.jobType)
-        if (activeTab === "featured") query = query.eq("is_featured", true)
-        if (activeTab === "remote") query = query.ilike("location", "%remote%")
+      if (filters.search) query = query.ilike("title", `%${filters.search}%`)
+      if (filters.category !== "all") query = query.eq("category", filters.category)
+      if (filters.minPrice) query = query.gte("price", parseFloat(filters.minPrice))
+      if (filters.maxPrice) query = query.lte("price", parseFloat(filters.maxPrice))
+      if (filters.jobType !== "any") query = query.eq("job_type", filters.jobType)
+      if (activeTab === "featured") query = query.eq("is_featured", true)
+      if (activeTab === "remote") query = query.ilike("location", "%remote%")
 
-        const { data, error } = await query
-        if (error) throw error
-        setJobs(data || [])
-      } catch (err) {
-        toast.error("Failed to load jobs", { description: err.message })
-      } finally {
-        setLoading(false)
-      }
+      const { data, error } = await query
+      if (error) throw error
+      setJobs(data || [])
+    } catch (err) {
+      toast.error("Failed to load jobs", { description: err.message })
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchJobs()
-  }, [filters, activeTab])
+  fetchJobs()
+}, [filters, activeTab])
+
 
   useEffect(() => {
     const fetchSavedJobs = async () => {
