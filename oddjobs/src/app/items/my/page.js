@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { Pencil, Trash2, Tag, DollarSign, Plus, PackageOpen, Image as ImageIcon, ChevronDown, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function MyItemsPage() {
   const [items, setItems] = useState([])
@@ -186,7 +187,7 @@ export default function MyItemsPage() {
                 {/* Image Section */}
                 <div className="relative aspect-square overflow-hidden">
                   {item.image_url ? (
-                    <img
+                    <Image
                       src={item.image_url}
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

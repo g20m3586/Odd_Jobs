@@ -110,7 +110,7 @@ export default function ApplyPage({ params }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
         <h2 className="text-xl font-semibold">Own Job Restriction</h2>
-        <p className="text-muted-foreground">You can't apply to your own listing</p>
+        <p className="text-muted-foreground">You can&apos;t apply to your own listing</p>
         <Button onClick={() => router.push(`/jobs/${params.id}`)}>
           View Your Listing
         </Button>
@@ -123,7 +123,7 @@ export default function ApplyPage({ params }) {
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
         <h2 className="text-xl font-semibold">Application Submitted</h2>
         <p className="text-muted-foreground">
-          You've already applied for {jobDetails?.title || 'this position'}
+          You&apos;ve already applied for {jobDetails?.title || 'this position'}
         </p>
         <Button onClick={() => router.push(`/jobs/${params.id}`)}>
           View Application Status
