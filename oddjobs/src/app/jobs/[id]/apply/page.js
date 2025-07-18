@@ -1,11 +1,10 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/client'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
 
 export default function ApplyPage({ params }) {
   const [coverLetter, setCoverLetter] = useState('')
@@ -13,51 +12,55 @@ export default function ApplyPage({ params }) {
   const [isOwner, setIsOwner] = useState(false)
   const [jobValid, setJobValid] = useState(true)
   const [alreadyApplied, setAlreadyApplied] = useState(false)
-  const [jobTitle, setJobTitle] = useState('')
+  const [jobDetails, setJobDetails] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
     const checkJobEligibility = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        const { data: job, error } = await supabase
-          .from('jobs')
-          .select('user_id, deadline, status, title')
-          .eq('id', params.id)
-          .single()
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: job, error } = await supabase
+        .from('jobs')
+        .select('id, title, user_id, deadline, status')
+        .eq('id', params.id)
+        .single()
 
-        if (error || !job) {
-          setJobValid(false)
-          return
-        }
-
-        setJobTitle(job.title)
-
-        if (user?.id === job.user_id) {
-          setIsOwner(true)
-          return
-        }
-
-        const deadlinePassed = job.deadline && new Date(job.deadline) < new Date()
-        if (job.status !== 'open' || deadlinePassed) {
-          setJobValid(false)
-          return
-        }
-
-        // Check if the user already applied
-        const { data: existingApplication } = await supabase
-          .from('applications')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('job_id', params.id)
-          .maybeSingle()
-
-        if (existingApplication) {
-          setAlreadyApplied(true)
-        }
-      } catch (error) {
-        toast.error('Failed to verify job eligibility')
+      if (error || !job) {
         setJobValid(false)
+        return
+      }
+
+      setJobDetails(job)
+
+      if (user?.id === job.user_id) {
+        setIsOwner(true)
+        return
+      }
+
+      // Check if job is closed (status check takes priority)
+      if (job.status !== 'open') {
+        setJobValid(false)
+        return
+      }
+
+      // Only check deadline if it exists
+      if (job.deadline) {
+        const deadlinePassed = new Date(job.deadline) < new Date()
+        if (deadlinePassed) {
+          setJobValid(false)
+          return
+        }
+      }
+
+      // Check if the user already applied
+      const { data: existingApplication } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('job_id', params.id)
+        .maybeSingle()
+
+      if (existingApplication) {
+        setAlreadyApplied(true)
       }
     }
 
@@ -80,18 +83,10 @@ export default function ApplyPage({ params }) {
 
       if (error) throw error
 
-      toast.success('Application submitted!', {
-        description: 'The employer has been notified.',
-        action: {
-          label: 'View Job',
-          onClick: () => router.push(`/jobs/${params.id}`)
-        }
-      })
+      toast.success('Application submitted successfully!')
       router.push(`/jobs/${params.id}`)
     } catch (error) {
-      toast.error('Submission failed', {
-        description: error.message
-      })
+      toast.error(error.message)
     } finally {
       setLoading(false)
     }
@@ -99,25 +94,25 @@ export default function ApplyPage({ params }) {
 
   if (!jobValid) {
     return (
-      <div className="container py-16 text-center">
-        <p className="text-lg text-destructive font-semibold">
-          This job is not available or the deadline has passed.
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <h2 className="text-xl font-semibold text-destructive">Job Unavailable</h2>
+        <p className="text-muted-foreground">
+          {jobDetails?.status === 'closed' 
+            ? 'This position has been closed' 
+            : 'The application period has ended'}
         </p>
-        <Button className="mt-4" onClick={() => router.push('/jobs')}>
-          Back to Jobs
-        </Button>
+        <Button onClick={() => router.push('/jobs')}>Browse Open Jobs</Button>
       </div>
     )
   }
 
   if (isOwner) {
     return (
-      <div className="container py-16 text-center">
-        <p className="text-lg font-semibold text-muted-foreground">
-          You cannot apply to your own job.
-        </p>
-        <Button className="mt-4" onClick={() => router.push(`/jobs/${params.id}`)}>
-          Go Back
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <h2 className="text-xl font-semibold">Own Job Restriction</h2>
+        <p className="text-muted-foreground">You can&apos;t apply to your own listing</p>
+        <Button onClick={() => router.push(`/jobs/${params.id}`)}>
+          View Your Listing
         </Button>
       </div>
     )
@@ -125,68 +120,77 @@ export default function ApplyPage({ params }) {
 
   if (alreadyApplied) {
     return (
-      <div className="container py-16 text-center">
-        <p className="text-lg text-muted-foreground">
-          You have already applied to this job.
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <h2 className="text-xl font-semibold">Application Submitted</h2>
+        <p className="text-muted-foreground">
+          You&apos;ve already applied for {jobDetails?.title || 'this position'}
         </p>
-        <div className="flex justify-center gap-4 mt-6">
-          <Button onClick={() => router.push(`/jobs/${params.id}`)}>
-            View Job
-          </Button>
-          <Button variant="outline" onClick={() => router.push('/jobs')}>
-            Browse Other Jobs
-          </Button>
-        </div>
+        <Button onClick={() => router.push(`/jobs/${params.id}`)}>
+          View Application Status
+        </Button>
       </div>
     )
   }
 
   return (
-    <div className="container py-8 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Apply for: {jobTitle}</h1>
-        <p className="text-muted-foreground mt-1">
-          Submit your application below
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">Cover Letter *</label>
-          <Textarea
-            value={coverLetter}
-            onChange={(e) => setCoverLetter(e.target.value)}
-            placeholder="Explain why you're the best candidate..."
-            rows={8}
-            required
-          />
-          <p className="text-sm text-muted-foreground">
-            Tip: Highlight your relevant experience and skills.
-          </p>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] py-8">
+      <div className="w-full max-w-2xl space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold">Apply for Position</h1>
+          {jobDetails?.title && (
+            <h2 className="text-xl text-primary font-medium">
+              {jobDetails.title}
+            </h2>
+          )}
+          {jobDetails?.deadline && (
+            <p className="text-sm text-muted-foreground">
+              Apply before: {new Date(jobDetails.deadline).toLocaleDateString()}
+            </p>
+          )}
         </div>
 
-        <div className="flex gap-4">
-          <Button 
-            type="submit" 
-            disabled={loading || !coverLetter.trim()}
-            className="flex items-center gap-2"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : 'Submit Application'}
-          </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => router.push(`/jobs/${params.id}`)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="font-medium">Cover Letter *</label>
+              <span className={`text-sm ${
+                coverLetter.length < 15 ? 'text-destructive' : 'text-muted-foreground'
+              }`}>
+                {coverLetter.length}/15 min
+              </span>
+            </div>
+            <Textarea
+              value={coverLetter}
+              onChange={(e) => setCoverLetter(e.target.value)}
+              placeholder={`Explain why you're perfect for "${jobDetails?.title || 'this position'}"...\n\nTip: Focus on relevant skills and measurable achievements.`}
+              rows={8}
+              minLength={15}
+              required
+              className="resize-none"
+            />
+            <p className="text-sm text-muted-foreground">
+              Minimum 15 characters. Tailor your response to this specific role.
+            </p>
+          </div>
+
+          <div className="flex justify-center gap-4 pt-4">
+            <Button 
+              type="submit" 
+              disabled={loading || coverLetter.length < 15}
+              className="min-w-[180px]"
+            >
+              {loading ? 'Submitting...' : 'Submit Application'}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => router.push(`/jobs/${params.id}`)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
