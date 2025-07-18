@@ -17,11 +17,16 @@ export default function JobDetailPage({ params: paramsPromise }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
+      const {
+        data: { user: currentUser },
+        error: authError,
+      } = await supabase.auth.getUser()
+
       if (authError) {
         toast.error('Auth error')
         return
       }
+
       setUser(currentUser)
 
       const { data, error } = await supabase
@@ -38,9 +43,14 @@ export default function JobDetailPage({ params: paramsPromise }) {
       const deadlinePassed = data.deadline && new Date(data.deadline) < new Date()
       const closed = data.status !== 'open' || deadlinePassed
 
-      setIsOwner(currentUser.id === data.user_id)
+      if (closed) {
+        setJobStatus('closed')
+      } else {
+        setJobStatus('open')
+      }
+
+      setIsOwner(currentUser?.id === data.user_id)
       setJob(data)
-      setJobStatus(closed ? 'closed' : 'open')
     }
 
     fetchData()
@@ -50,11 +60,15 @@ export default function JobDetailPage({ params: paramsPromise }) {
     return <div className="container py-16">Loading...</div>
   }
 
-  if (jobStatus === 'invalid') {
+  if (jobStatus === 'invalid' || !job) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-lg font-semibold text-destructive">Job not found or no longer available.</p>
-        <Button className="mt-4" onClick={() => router.push('/jobs')}>Back to Jobs</Button>
+        <p className="text-lg font-semibold text-destructive">
+          Job not found or no longer available.
+        </p>
+        <Button className="mt-4" onClick={() => router.push('/jobs')}>
+          Back to Jobs
+        </Button>
       </div>
     )
   }
