@@ -15,6 +15,8 @@ export default function ApplyPage({ params }) {
   const [jobDetails, setJobDetails] = useState(null)
   const router = useRouter()
 
+  const draftKey = `coverLetterDraft-${params.id}`
+
   useEffect(() => {
     const checkJobEligibility = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -36,13 +38,11 @@ export default function ApplyPage({ params }) {
         return
       }
 
-      // Check if job is closed (status check takes priority)
       if (job.status !== 'open') {
         setJobValid(false)
         return
       }
 
-      // Only check deadline if it exists
       if (job.deadline) {
         const deadlinePassed = new Date(job.deadline) < new Date()
         if (deadlinePassed) {
@@ -51,7 +51,6 @@ export default function ApplyPage({ params }) {
         }
       }
 
-      // Check if the user already applied
       const { data: existingApplication } = await supabase
         .from('applications')
         .select('id')
@@ -65,28 +64,67 @@ export default function ApplyPage({ params }) {
     }
 
     checkJobEligibility()
+
+    // Load draft
+    const savedDraft = localStorage.getItem(draftKey)
+    if (savedDraft) {
+      setCoverLetter(savedDraft)
+    }
   }, [params.id])
+
+  useEffect(() => {
+    localStorage.setItem(draftKey, coverLetter)
+  }, [coverLetter, draftKey])
+
+  const sanitize = (text) => {
+    return text.replace(/<[^>]+>/g, '').trim()
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
 
     try {
+      const sanitizedLetter = sanitize(coverLetter)
+
+      if (sanitizedLetter.length < 50) {
+        toast.warning("Cover letter must be at least 50 characters.")
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
+
+      const { data: existingApplication, error: checkError } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('job_id', params.id)
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existingApplication) {
+        toast.warning("You've already applied for this job.")
+        router.push(`/jobs/${params.id}`)
+        return
+      }
 
       const { error } = await supabase.from('applications').insert({
         job_id: params.id,
         user_id: user.id,
-        cover_letter: coverLetter,
-        status: 'pending'
+        cover_letter: sanitizedLetter,
+        status: 'pending',
+        recipient_id: jobDetails.user_id
       })
 
       if (error) throw error
 
       toast.success('Application submitted successfully!')
+      localStorage.removeItem(draftKey)
       router.push(`/jobs/${params.id}`)
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message || "Something went wrong.")
     } finally {
       setLoading(false)
     }
@@ -154,9 +192,9 @@ export default function ApplyPage({ params }) {
             <div className="flex items-center justify-between">
               <label className="font-medium">Cover Letter *</label>
               <span className={`text-sm ${
-                coverLetter.length < 15 ? 'text-destructive' : 'text-muted-foreground'
+                coverLetter.length < 50 ? 'text-destructive' : 'text-muted-foreground'
               }`}>
-                {coverLetter.length}/15 min
+                {coverLetter.length}/50 min
               </span>
             </div>
             <Textarea
@@ -164,19 +202,19 @@ export default function ApplyPage({ params }) {
               onChange={(e) => setCoverLetter(e.target.value)}
               placeholder={`Explain why you're perfect for "${jobDetails?.title || 'this position'}"...\n\nTip: Focus on relevant skills and measurable achievements.`}
               rows={8}
-              minLength={15}
+              minLength={50}
               required
               className="resize-none"
             />
             <p className="text-sm text-muted-foreground">
-              Minimum 15 characters. Tailor your response to this specific role.
+              Minimum 50 characters. Tailor your response to this specific role.
             </p>
           </div>
 
           <div className="flex justify-center gap-4 pt-4">
             <Button 
               type="submit" 
-              disabled={loading || coverLetter.length < 15}
+              disabled={loading || coverLetter.length < 50}
               className="min-w-[180px]"
             >
               {loading ? 'Submitting...' : 'Submit Application'}
