@@ -1,14 +1,17 @@
 "use client"
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { usePathname } from 'next/navigation'
-import { supabase } from '@/lib/client'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import ThemeToggle from '@/components/theme/ThemeToggle' // ✅ import the toggle
+import { supabase } from '@/lib/client'
+import { Button } from '@/components/ui/button'
+import ThemeToggle from '@/components/theme/ThemeToggle'
+// import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 
 export default function Header() {
   const pathname = usePathname()
+  const router = useRouter()
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -27,7 +30,19 @@ export default function Header() {
   }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    const loadingToast = toast.loading("Signing you out...")
+
+    const { error } = await supabase.auth.signOut()
+
+    toast.dismiss(loadingToast)
+
+    if (!error) {
+      toast.success("Signed out successfully.")
+      router.push('/')
+    } else {
+      toast.error("Failed to sign out. Try again.")
+      console.error("Sign out error:", error.message)
+    }
   }
 
   const navLinks = [
@@ -67,7 +82,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle /> {/* ✅ Inserted here */}
+            <ThemeToggle />
 
             {user ? (
               <>

@@ -122,7 +122,7 @@ export default function ApplyPage({ params }) {
 
       toast.success('Application submitted successfully!')
       localStorage.removeItem(draftKey)
-      router.push(`/jobs/${params.id}`)
+      router.push(`/dashboard/applications`)
     } catch (error) {
       toast.error(error.message || "Something went wrong.")
     } finally {
