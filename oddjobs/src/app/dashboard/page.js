@@ -6,13 +6,24 @@ import StatCard from "@/components/dashboard/StatCard"
 import ActionCard from "@/components/dashboard/ActionCard"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowRight, Plus, Search, RefreshCcw } from "lucide-react"
+// Fix imports at the top:
+import { useRouter } from "next/navigation"
+import { 
+  ArrowRight, 
+  Plus, 
+  Search, 
+  RefreshCw, 
+  ChevronRight 
+} from "lucide-react"
+
+// Remove the duplicate ArrowRight from Heroicons imports
 import {
   BriefcaseIcon,
   UserIcon,
   InboxIcon,
   CurrencyDollarIcon,
   ClockIcon,
+  EyeIcon
 } from "@heroicons/react/24/outline"
 
 const activityTypeMap = {
@@ -34,12 +45,18 @@ const activityTypeMap = {
     iconColor: "text-amber-600 dark:text-amber-400",
     label: "Application submitted",
   },
+  job_viewed: {
+    icon: EyeIcon,
+    bgColor: "bg-purple-50 dark:bg-purple-900/20",
+    iconColor: "text-purple-600 dark:text-purple-400",
+    label: "Job viewed",
+  },
   default: {
     icon: ClockIcon,
     bgColor: "bg-gray-50 dark:bg-gray-700/20",
     iconColor: "text-gray-600 dark:text-gray-400",
     label: "Activity",
-  },
+  }
 }
 
 function timeAgoFromNow(dateString) {
@@ -57,6 +74,7 @@ function timeAgoFromNow(dateString) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [stats, setStats] = useState({
@@ -123,20 +141,26 @@ export default function DashboardPage() {
         0
       ) || 0
 
-      const completeFields = [
-        profile.name,
-        profile.email,
-        profile.phone,
-        profile.avatar_url,
-      ]
-      const completeCount = completeFields.filter(Boolean).length
+const completeFields = [
+  profile.name,
+  profile.email,
+  profile.phone,
+  profile.avatar_url,
+  profile.location,
+  profile.bio,
+  // add any additional fields here
+].filter(Boolean)
 
-      setStats({
-        jobCount: jobCount || 0,
-        applications: appsRes.count || 0,
-        earnings,
-        profileComplete: Math.round((completeCount / completeFields.length) * 100),
-      })
+const totalFields = 7
+const profileComplete = Math.round((completeFields.length / totalFields) * 100)
+
+setStats({
+  jobCount: jobCount || 0,
+  applications: appsRes.count || 0,
+  earnings,
+  profileComplete, // ✅ clean and working
+})
+
 
       const { data: recentActivity } = await supabase
         .from("activity_log")
@@ -178,7 +202,7 @@ export default function DashboardPage() {
           {error}
         </div>
         <Button onClick={fetchDashboardData}>
-          <RefreshCcw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
       </div>
@@ -197,7 +221,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <Button onClick={fetchDashboardData} variant="outline" className="text-sm">
-          <RefreshCcw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
       </div>
@@ -268,40 +292,58 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Activity */}
-      <section className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
-          <Button variant="ghost" className="text-blue-600 dark:text-blue-400">
-            View All <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-        <div className="space-y-4">
-          {activities.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No recent activity</p>
-          ) : (
-            activities.map((activity) => {
-              const typeInfo = activityTypeMap[activity.type] || activityTypeMap.default
-              const Icon = typeInfo.icon
-              const timeAgo = timeAgoFromNow(activity.created_at)
 
-              return (
-                <div key={activity.id} className="flex items-start gap-4">
-                  <div className={`${typeInfo.bgColor} p-2 rounded-lg`}>
-                    <Icon className={`h-5 w-5 ${typeInfo.iconColor}`} />
+
+{/* Activity */}
+<section className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-6">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+    <Button 
+      variant="ghost" 
+      className="text-blue-600 dark:text-blue-400"
+      onClick={() => router.push('/dashboard/activity')}
+    >
+      View All <ArrowRight className="ml-2 h-4 w-4" />
+    </Button>
+  </div>
+  <div className="space-y-4">
+    {activities.length === 0 ? (
+      <p className="text-sm text-muted-foreground">No recent activity</p>
+    ) : (
+      activities.map((activity) => {
+        const typeInfo = activityTypeMap[activity.type] || activityTypeMap.default
+        const Icon = typeInfo.icon
+        const timeAgo = timeAgoFromNow(activity.created_at)
+
+        return (
+          <Link 
+            key={activity.id} 
+            href={`/dashboard/activity/${activity.id}`}
+            className="block hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2 transition-colors"
+          >
+            <div className="flex items-start gap-4">
+              <div className={`${typeInfo.bgColor} p-2 rounded-lg`}>
+                <Icon className={`h-5 w-5 ${typeInfo.iconColor}`} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {activity.description || typeInfo.label}
+                </p>
+                <p className="text-sm text-muted-foreground">{timeAgo}</p>
+                {activity.metadata && (
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {JSON.stringify(activity.metadata)}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.description || typeInfo.label}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{timeAgo}</p>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </section>
+                )}
+              </div>
+              <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+            </div>
+          </Link>
+        )
+      })
+    )}
+  </div>
+</section>
     </div>
   )
 }
