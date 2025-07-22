@@ -1,5 +1,6 @@
 "use client"
 
+import Link from 'next/link'
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/client"
 import StatCard from "@/components/dashboard/StatCard"
@@ -13,7 +14,7 @@ import {
   Plus, 
   Search, 
   RefreshCw, 
-  ChevronRight 
+  ChevronRight, 
 } from "lucide-react"
 
 // Remove the duplicate ArrowRight from Heroicons imports
@@ -336,7 +337,7 @@ setStats({
                   </div>
                 )}
               </div>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+              <ChevronRight className="h-5 w-5 text-gray-400" />
             </div>
           </Link>
         )
