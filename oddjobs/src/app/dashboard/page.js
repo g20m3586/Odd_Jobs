@@ -227,44 +227,58 @@ setStats({
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Profile Completeness"
-          value={`${stats.profileComplete}%`}
-          icon="User"
-          trend={
-            stats.profileComplete > 80 ? "up" : stats.profileComplete > 50 ? "neutral" : "down"
-          }
-          variant={
-            stats.profileComplete < 50
-              ? "destructive"
-              : stats.profileComplete < 80
-              ? "warning"
-              : "success"
-          }
-        />
-        <StatCard
-          title="My Jobs"
-          value={stats.jobCount}
-          subtitle="Open Listings"
-          icon="Briefcase"
-          trend="up"
-        />
-        <StatCard
-          title="Applications"
-          value={stats.applications}
-          subtitle={profile.role === "business" ? "Received" : "Submitted"}
-          icon="Inbox"
-          trend="up"
-        />
-        <StatCard
-          title="Earnings"
-          value={`$${stats.earnings.toFixed(2)}`}
-          icon="DollarSign"
-          trend="up"
-        />
-      </div>
+{/* Stats */}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  {/* Profile Completeness (static) */}
+  
+<Link href="/dashboard/profile" className="block">
+  <StatCard
+    title="Profile Completeness"
+    value={`${stats.profileComplete}%`}
+    icon="User"
+    trend={
+      stats.profileComplete > 80 ? "up" : stats.profileComplete > 50 ? "neutral" : "down"
+    }
+    variant={
+      stats.profileComplete < 50
+        ? "destructive"
+        : stats.profileComplete < 80
+        ? "warning"
+        : "success"
+    }
+  />
+</Link>
+
+  {/* My Jobs (clickable) */}
+  <Link href="/dashboard/my-jobs" className="block">
+    <StatCard
+      title="My Jobs"
+      value={stats.jobCount}
+      subtitle="Open Listings"
+      icon="Briefcase"
+      trend="up"
+    />
+  </Link>
+
+  {/* Applications (clickable) */}
+  <Link href="/dashboard/applications" className="block">
+    <StatCard
+      title="Applications"
+      value={stats.applications}
+      subtitle={profile.role === "business" ? "Received" : "Submitted"}
+      icon="Inbox"
+      trend="up"
+    />
+  </Link>
+
+  {/* Earnings (static) */}
+  <StatCard
+    title="Earnings"
+    value={`$${stats.earnings.toFixed(2)}`}
+    icon="DollarSign"
+    trend="up"
+  />
+</div>
 
       {/* Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
