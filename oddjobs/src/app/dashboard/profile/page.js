@@ -79,40 +79,83 @@ const ProfileService = {
     return data
   },
 
-  async updateProfile(userId, data) {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ ...data, updated_at: new Date().toISOString() })
-      .eq("id", userId)
+async updateProfile(userId, data) {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq("id", userId)
 
-    if (error) throw new Error(error.message)
-  },
+  if (error) {
+    console.error("Update profile error:", error)
+    throw new Error(error.message || "Failed to update profile")
+  }
+},
 
-  async uploadAvatar(userId, file) {
-    const filePath = `avatars/${userId}-${Date.now()}-${file.name}`
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-    const maxSize = 5 * 1024 * 1024 // 5MB
+
+async uploadAvatar(userId, file) {
+  try {
+    console.log('Starting upload...', { userId, file });
+    
+    const fileExt = file.name.split('.').pop();
+    const filePath = `avatars/${userId}/${Date.now()}.${fileExt}`;
+    console.log('File path:', filePath);
+
+    // Verify file type and size
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!validTypes.includes(file.type)) {
-      throw new Error('Only JPEG, PNG, and WebP images are allowed')
+      throw new Error('Only JPEG, PNG, and WebP images are allowed');
     }
 
     if (file.size > maxSize) {
-      throw new Error('Image must be less than 5MB')
+      throw new Error('Image must be less than 5MB');
     }
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file, { upsert: true })
+    console.log('Uploading to Supabase storage...');
+    const { data, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
 
-    if (uploadError) throw new Error("Image upload failed")
+    console.log('Upload response:', { data, uploadError });
 
-    const { data: urlData } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(filePath)
+    if (uploadError) {
+      console.error('Detailed upload error:', {
+        message: uploadError.message,
+        code: uploadError.code,
+        details: uploadError.details,
+        stack: uploadError.stack
+      });
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
 
-    return urlData.publicUrl
+    console.log('Getting public URL...');
+    const { data: publicData, error: urlError } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    if (urlError) {
+      throw new Error(`Could not get public URL: ${urlError.message}`);
+    }
+
+    const publicUrl = publicData?.publicUrl;
+    if (!publicUrl) {
+      throw new Error("Public URL is missing after upload.");
+    }
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Full upload error:', {
+      message: error.message,
+      stack: error.stack,
+      originalError: error
+    });
+    throw new Error(`Image upload failed: ${error.message}`);
   }
+}
   
 }
 
@@ -149,21 +192,34 @@ const AvatarUpload = ({ avatarUrl, onUpload, userId }) => {
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
 
-  const handleImageUpload = async (file) => {
-    if (!file) return
+const handleImageUpload = async (file) => {
+  if (!file) return;
 
-    try {
-      setUploading(true)
-      const publicUrl = await ProfileService.uploadAvatar(userId, file)
-      onUpload(publicUrl)
-      toast.success("Avatar updated successfully")
-    } catch (err) {
-      toast.error(err.message || "Avatar upload failed")
-    } finally {
-      setUploading(false)
-      setDragActive(false)
-    }
+  try {
+    setUploading(true);
+    
+    // Verify authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error("Please sign in to upload images");
+
+    console.log('User authenticated, starting upload...');
+    const publicUrl = await ProfileService.uploadAvatar(user.id, file);
+    
+    console.log('Upload completed, updating profile...');
+    await onUpload(publicUrl);
+    toast.success("Avatar updated successfully");
+  } catch (err) {
+    console.error('Avatar upload error:', {
+      error: err,
+      message: err.message,
+      stack: err.stack
+    });
+    toast.error(err.message || "Avatar upload failed");
+  } finally {
+    setUploading(false);
+    setDragActive(false);
   }
+};
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -334,17 +390,23 @@ export default function ProfilePage() {
     fetchUser()
   }, [router])
 
-  const handleAvatarUpdate = async (url) => {
-    if (!userId) return
-    
-    try {
-      await ProfileService.updateProfile(userId, { avatar_url: url })
-      setValue("avatar_url", url, { shouldDirty: true })
-      refetch()
-    } catch (err) {
-      toast.error("Failed to update avatar")
-    }
+const handleAvatarUpdate = async (url) => {
+  if (!userId) return;
+  
+  try {
+    await ProfileService.updateProfile(userId, { avatar_url: url });
+    setValue("avatar_url", url, { shouldDirty: true });
+    await ActivityService.logActivity(
+      userId,
+      'avatar_updated',
+      'Updated profile avatar'
+    );
+    refetch();
+  } catch (err) {
+    console.error('Avatar update error:', err);
+    toast.error("Failed to update avatar in profile");
   }
+};
 
 // When profile is updated in profile.js
 const confirmSubmit = async () => {
