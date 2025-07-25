@@ -182,7 +182,7 @@ export default function HomePage() {
               <div>
                 <h4 className="font-medium text-emerald-900 dark:text-white">Zero Platform Fees</h4>
                 <p className="text-emerald-700/80 dark:text-emerald-200/80 text-sm mt-1">
-                  Keep 100% of your budget - we don't take any commission
+                  Keep 100% of your budget - we do not take any commission
                 </p>
               </div>
             </li>
@@ -353,7 +353,7 @@ export default function HomePage() {
                   89% of projects delivered ahead of schedule
                 </p>
                 <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
-                  Based on last quarter's performance data
+                  Based on last quarter&apos;s performance data
                 </p>
               </div>
             </div>
