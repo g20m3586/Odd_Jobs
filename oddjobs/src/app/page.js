@@ -4,7 +4,9 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, Search, Sparkles, Filter, MapPin, DollarSign, Clock } from "lucide-react"
+import { CheckCircle2, Search, Sparkles, Filter, MapPin, DollarSign, Clock, ChevronLeft, ChevronRight,
+  ShieldCheck, BadgeCheck, Rocket, Diamond, Cpu, Palette, Zap, Globe } from "lucide-react"
+
 
 const avatars = [
   "https://api.dicebear.com/8.x/avataaars/svg?seed=c91d61f2-3fe6-4625-b00b-e3c68619466a",
@@ -20,163 +22,347 @@ const avatars = [
   "https://api.dicebear.com/8.x/avataaars/svg?seed=3586bb74-31a6-4c6a-930a-11bea2c91c3d",
   "https://api.dicebear.com/8.x/avataaars/svg?seed=3f10062c-31fa-4058-aa90-99c15b76c01c"
 ]
+  const services = [
+    "Web Development", 
+    "Logo Design", 
+    "Social Media", 
+    "Content Writing",
+    "Translation", 
+    "Virtual Assistance", 
+    "Voice Over", 
+    "SEO"
+  ];
+  
 
 export default function HomePage() {
-  const [query, setQuery] = useState("")
-  const router = useRouter()
+  const [query, setQuery] = useState("");
+  const router = useRouter();
 
   const handleSearch = (e) => {
-    e.preventDefault()
-    if (!query.trim()) return
-    router.push(`/jobs?search=${encodeURIComponent(query.trim())}`)
-  }
+    e.preventDefault();
+    if (!query.trim()) return;
+    router.push(`/jobs?search=${encodeURIComponent(query.trim())}`);
+  };
 
   return (
     <main className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
-      {/* Hero */}
-<section className="relative h-[90vh] overflow-hidden">
-  {/* Fullscreen Background Video */}
-  <video
-    autoPlay
-    loop
-    muted
-    playsInline
-    className="absolute inset-0 w-full h-full object-cover z-0"
-    poster="/images/video-poster.jpg"
-  >
-    <source src="/videos/OddJobs_Video.mp4" type="video/mp4" />
-  </video>
-
-  {/* Dark Overlay for Text Readability */}
-  <div className="absolute inset-0 bg-black/50 z-10" />
-
-  {/* Foreground Content */}
-  <div className="relative z-20 container mx-auto px-4 h-full flex flex-col justify-center items-center text-center text-white">
-    <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold max-w-4xl leading-tight">
-      Hire smarter. Work faster.
-      <br />
-      <span>
-        ODDJobs connects freelancers and clients seamlessly.
-      </span>
-    </h1>
-
-    <p className="text-lg text-white/80 max-w-2xl mt-6">
-      A modern freelance marketplace to find and offer high-quality services in minutes.
-    </p>
-
-    <form onSubmit={handleSearch} className="w-full max-w-2xl mt-10 relative group">
-      <div className="relative flex items-center">
-        <div className="absolute left-4 text-white/60">
-          <Search className="w-5 h-5 group-focus-within:scale-110 transition-transform" />
-        </div>
-        <input
-          type="text"
-          placeholder="Find jobs, services, or freelancers..."
-          className="w-full py-4 pl-12 pr-32 rounded-full bg-white/90 text-black text-lg border border-white/30 shadow-lg backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <Button
-          type="submit"
-          className="absolute right-1 h-12 px-6 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-md hover:scale-[1.02] transition-all duration-200"
+      {/* Hero Section */}
+      <section className="relative h-[90vh] overflow-hidden">
+        {/* Fullscreen Background Video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          poster="/images/video-poster.jpg"
         >
-          Search
-        </Button>
-      </div>
+          <source src="/videos/OddJobs_Video.mp4" type="video/mp4" />
+        </video>
 
-      {query && (
-        <div className="absolute top-full mt-2 w-full bg-white text-black rounded-lg shadow-lg z-30 border max-h-60 overflow-y-auto">
-          <div className="p-2 hover:bg-zinc-100 cursor-pointer">Web Designer in New York</div>
-          <div className="p-2 hover:bg-zinc-100 cursor-pointer">Mobile App Developer</div>
-          <div className="p-2 hover:bg-zinc-100 cursor-pointer">Content Writer ($50-$100)</div>
-          <div className="p-2 text-sm text-zinc-500">Press Enter to search &quot;{query}&quot;</div>
+        {/* Dark Overlay for Text Readability */}
+        <div className="absolute inset-0 bg-black/50 z-10" />
+
+        {/* Foreground Content */}
+        <div className="relative z-20 container mx-auto px-4 h-full flex flex-col justify-center items-center text-center text-white">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold max-w-4xl leading-tight">
+            Hire smarter. Work faster.
+            <br />
+            <span className="text-emerald-400">
+              ODDJobs connects freelancers and clients seamlessly.
+            </span>
+          </h1>
+
+          <p className="text-lg text-white/80 max-w-2xl mt-6">
+            A modern freelance marketplace to find and offer high-quality services in minutes.
+          </p>
+
+          <form onSubmit={handleSearch} className="w-full max-w-2xl mt-10 relative group">
+            <div className="relative flex items-center">
+              <div className="absolute left-4 text-white/60">
+                <Search className="w-5 h-5 group-focus-within:scale-110 transition-transform" />
+              </div>
+              <input
+                type="text"
+                placeholder="Find jobs, services, or freelancers..."
+                className="w-full py-4 pl-12 pr-32 rounded-full bg-white/90 text-black text-lg border border-white/30 shadow-lg backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <Button
+                type="submit"
+                className="absolute right-1 h-12 px-6 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:scale-[1.02] transition-all duration-200"
+              >
+                Search
+              </Button>
+            </div>
+
+            {query && (
+              <div className="absolute top-full mt-2 w-full bg-white text-black rounded-lg shadow-lg z-30 border max-h-60 overflow-y-auto">
+                <div className="p-2 hover:bg-zinc-100 cursor-pointer">Web Designer in New York</div>
+                <div className="p-2 hover:bg-zinc-100 cursor-pointer">Mobile App Developer</div>
+                <div className="p-2 hover:bg-zinc-100 cursor-pointer">Content Writer ($50-$100)</div>
+                <div className="p-2 text-sm text-zinc-500">Press Enter to search &quot;{query}&quot;</div>
+              </div>
+            )}
+
+            <div className="mt-2 text-sm text-white/70">
+              Try: <span className="text-emerald-400 hover:underline cursor-pointer">Web Design</span>{' '}
+              <span className="text-emerald-400 hover:underline cursor-pointer">Copywriting</span>{' '}
+              <span className="text-emerald-400 hover:underline cursor-pointer">Mobile App</span>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2 mt-4">
+              <Button variant="outline" size="sm" className="rounded-full border-white/40 text-black hover:bg-white/10 hover:text-emerald-400">
+                <Filter className="w-4 h-4 mr-1" />
+                Category
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-full border-white/40 text-black hover:bg-white/10 hover:text-emerald-400">
+                <MapPin className="w-4 h-4 mr-1" />
+                Location
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-full border-white/40 text-black hover:bg-white/10 hover:text-emerald-400">
+                <DollarSign className="w-4 h-4 mr-1" />
+                Budget
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-full border-white/40 text-black hover:bg-white/10 hover:text-emerald-400">
+                <Clock className="w-4 h-4 mr-1" />
+                Delivery Time
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
-
-      <div className="mt-2 text-sm text-white/70">
-        Try: <span className="text-primary hover:underline cursor-pointer">Web Design</span>{' '}
-        <span className="text-primary hover:underline cursor-pointer">Copywriting</span>{' '}
-        <span className="text-primary hover:underline cursor-pointer">Mobile App</span>
-      </div>
-
-      <div className="flex flex-wrap justify-center gap-2 mt-4">
-        <Button variant="outline" size="sm" className="rounded-full border-white/40 text-white hover:bg-white/10">
-          <Filter className="w-4 h-4 mr-1" />
-          Category
-        </Button>
-        <Button variant="outline" size="sm" className="rounded-full border-white/40 text-white hover:bg-white/10">
-          <MapPin className="w-4 h-4 mr-1" />
-          Location
-        </Button>
-        <Button variant="outline" size="sm" className="rounded-full border-white/40 text-white hover:bg-white/10">
-          <DollarSign className="w-4 h-4 mr-1" />
-          Budget
-        </Button>
-        <Button variant="outline" size="sm" className="rounded-full border-white/40 text-white hover:bg-white/10">
-          <Clock className="w-4 h-4 mr-1" />
-          Delivery Time
-        </Button>
-      </div>
-    </form>
-  </div>
-</section>
+      </section>
 
 
       {/* Services */}
-      <section className="py-16 container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-10 text-center">Top Freelance Services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {["Web Development", "Logo Design", "Social Media", "Content Writing", "Translation", "Virtual Assistance", "Voice Over", "SEO"].map((service, i) => (
-            <Link
-              key={i}
-              href={`/jobs?search=${service}`}
-              className="p-6 border rounded-lg hover:shadow-md text-center transition hover:-translate-y-1 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            >
-              <Sparkles className="mx-auto text-primary mb-4" />
-              <h3 className="font-semibold">{service}</h3>
-            </Link>
-          ))}
+<section className="py-16 container mx-auto px-4">
+  <h2 className="text-3xl font-bold mb-12 text-center">
+    Top Freelance Services
+    <span className="block w-20 h-1 bg-emerald-500 mx-auto mt-4"></span>
+  </h2>
+  
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
+    {services.map((service, i) => (
+      <Link
+        key={i}
+        href={`/jobs?search=${encodeURIComponent(service)}`}
+        className="p-6 border rounded-xl text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-zinc-50 dark:hover:bg-zinc-800 group"
+      >
+        <div className="relative">
+          <Sparkles className="mx-auto text-emerald-500 mb-4 group-hover:scale-110 transition-transform" />
+          <h3 className="font-semibold text-lg group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            {service}
+          </h3>
         </div>
-      </section>
+      </Link>
+    ))}
+  </div>
+</section>
 
       {/* Value Propositions */}
-      <section className="bg-zinc-50 dark:bg-zinc-800/50 py-20">
-        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 text-left max-w-5xl">
-          <div>
-            <h2 className="text-3xl font-bold mb-4">Why choose ODDJobs?</h2>
-            <p className="text-muted-foreground mb-6">
-              Our platform is tailored to give businesses access to reliable, skilled freelancers in record time.
-            </p>
-            <ul className="space-y-4 text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500" />
-                No commission fees.
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500" />
-                Secure payments with escrow.
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500" />
-                Verified freelancers and projects.
-              </li>
-            </ul>
+<section className="py-20 px-4">
+  <div className="container mx-auto max-w-6xl">
+    <div className="bg-gradient-to-br from-emerald-100 via-teal-50 to-white dark:from-emerald-900/80 dark:via-teal-900/60 dark:to-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-emerald-200/50 dark:border-emerald-800/30">
+      <div className="grid md:grid-cols-2 gap-10 p-10 md:p-14">
+        {/* Left Column - Core Value Propositions */}
+        <div className="space-y-7">
+          <h2 className="text-3xl md:text-4xl font-bold text-emerald-900 dark:text-emerald-50">
+            The Smart Way to Build Your Team
+          </h2>
+          <p className="text-lg text-emerald-800/90 dark:text-emerald-100/90">
+            ODDJobs connects you with top-tier freelance talent in minutes, not weeks. Get quality work delivered faster without the overhead.
+          </p>
+          
+          <ul className="space-y-5">
+            <li className="flex items-start gap-4">
+              <div className="bg-emerald-500/10 p-2 rounded-full">
+                <CheckCircle2 className="text-emerald-600 dark:text-emerald-400 w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-medium text-emerald-900 dark:text-white">Zero Platform Fees</h4>
+                <p className="text-emerald-700/80 dark:text-emerald-200/80 text-sm mt-1">
+                  Keep 100% of your budget - we don't take any commission
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-4">
+              <div className="bg-emerald-500/10 p-2 rounded-full">
+                <ShieldCheck className="text-emerald-600 dark:text-emerald-400 w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-medium text-emerald-900 dark:text-white">Risk-Free Payments</h4>
+                <p className="text-emerald-700/80 dark:text-emerald-200/80 text-sm mt-1">
+                  Funds held securely in escrow until you approve the work
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-4">
+              <div className="bg-emerald-500/10 p-2 rounded-full">
+                <BadgeCheck className="text-emerald-600 dark:text-emerald-400 w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-medium text-emerald-900 dark:text-white">Vetted Professionals</h4>
+                <p className="text-emerald-700/80 dark:text-emerald-200/80 text-sm mt-1">
+                  Only top 20% of applicants pass our rigorous screening
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        {/* Right Column - Social Proof */}
+        <div className="space-y-7">
+          <h3 className="text-2xl font-semibold text-emerald-900 dark:text-emerald-50">
+            Trusted by innovative companies worldwide
+          </h3>
+          <p className="text-lg text-emerald-800/90 dark:text-emerald-100/90">
+            From fast-growing startups to established brands, we help teams scale smarter with on-demand talent.
+          </p>
+          
+          <div className="flex flex-wrap gap-3">
+            {[
+              { name: "StartupX", logo: <Rocket className="w-5 h-5" /> },
+              { name: "BrandHouse", logo: <Diamond className="w-5 h-5" /> },
+              { name: "TechNova", logo: <Cpu className="w-5 h-5" /> },
+              { name: "CreativeLab", logo: <Palette className="w-5 h-5" /> },
+            ].map((company, i) => (
+              <div 
+                key={i} 
+                className="flex items-center gap-2 px-4 py-3 bg-white/90 dark:bg-emerald-900/70 backdrop-blur-sm rounded-xl text-emerald-900 dark:text-emerald-100 border border-emerald-200/70 dark:border-emerald-700/40 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <span className="text-emerald-600 dark:text-emerald-300">
+                  {company.logo}
+                </span>
+                <span>{company.name}</span>
+              </div>
+            ))}
           </div>
-          <div>
-            <h3 className="text-xl font-semibold mb-4">ODDJobs is trusted by modern startups</h3>
-            <p className="text-muted-foreground mb-6">
-  {`Whether you're building a website or scaling your brand, we help you find the right people to get it done.`}
-</p>
-            <div className="flex flex-wrap gap-4">
-              {["Startup A", "Company B", "Brand C", "Agency D"].map((company, i) => (
-                <div key={i} className="px-4 py-2 bg-white dark:bg-zinc-700 rounded-lg shadow-sm">
-                  {company}
-                </div>
-              ))}
+
+          <div className="pt-4">
+            <div className="flex items-center gap-3 p-4 bg-white/80 dark:bg-zinc-800/50 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-800 border-2 border-white dark:border-zinc-800" />
+                ))}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-emerald-900 dark:text-white">
+                  142+ projects completed this week
+                </p>
+                <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
+                  Join thousands of satisfied clients
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* New Amber/Orange Complementary Section */}
+<section className="py-20 px-4">
+  <div className="container mx-auto max-w-6xl">
+    <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-white dark:from-amber-900/80 dark:via-orange-900/60 dark:to-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-amber-200/50 dark:border-amber-800/30">
+      <div className="grid md:grid-cols-2 gap-10 p-10 md:p-14">
+        {/* Left Column - Core Value Propositions */}
+        <div className="space-y-7">
+          <h2 className="text-3xl md:text-4xl font-bold text-amber-900 dark:text-amber-50">
+            Lightning-Fast Project Turnaround
+          </h2>
+          <p className="text-lg text-amber-800/90 dark:text-amber-100/90">
+            Our freelancers deliver exceptional quality at startup speed. Go from idea to execution in record time.
+          </p>
+          
+          <ul className="space-y-5">
+            <li className="flex items-start gap-4">
+              <div className="bg-amber-500/10 p-2 rounded-full">
+                <Zap className="text-amber-600 dark:text-amber-400 w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-medium text-amber-900 dark:text-white">24-Hour Matching</h4>
+                <p className="text-amber-700/80 dark:text-amber-200/80 text-sm mt-1">
+                  Get matched with perfect freelancers within one business day
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-4">
+              <div className="bg-amber-500/10 p-2 rounded-full">
+                <Clock className="text-amber-600 dark:text-amber-400 w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-medium text-amber-900 dark:text-white">Average 3-Day Start</h4>
+                <p className="text-amber-700/80 dark:text-amber-200/80 text-sm mt-1">
+                  Most projects begin within 72 hours of posting
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-4">
+              <div className="bg-amber-500/10 p-2 rounded-full">
+                <Globe className="text-amber-600 dark:text-amber-400 w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-medium text-amber-900 dark:text-white">Global Talent Pool</h4>
+                <p className="text-amber-700/80 dark:text-amber-200/80 text-sm mt-1">
+                  Around-the-clock coverage across all timezones
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        {/* Right Column - Social Proof */}
+        <div className="space-y-7">
+          <h3 className="text-2xl font-semibold text-amber-900 dark:text-amber-50">
+            Speed without compromise
+          </h3>
+          <p className="text-lg text-amber-800/90 dark:text-amber-100/90">
+            These teams trusted us to deliver quality results on tight deadlines:
+          </p>
+          
+          <div className="flex flex-wrap gap-3">
+            {[
+              { name: "FlashApp", logo: <Zap className="w-5 h-5" /> },
+              { name: "QuickScale", logo: <Rocket className="w-5 h-5" /> },
+              { name: "DeadlinePros", logo: <Clock className="w-5 h-5" /> },
+              { name: "GlobalTeams", logo: <Globe className="w-5 h-5" /> },
+            ].map((company, i) => (
+              <div 
+                key={i} 
+                className="flex items-center gap-2 px-4 py-3 bg-white/90 dark:bg-amber-900/70 backdrop-blur-sm rounded-xl text-amber-900 dark:text-amber-100 border border-amber-200/70 dark:border-amber-700/40 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <span className="text-amber-600 dark:text-amber-300">
+                  {company.logo}
+                </span>
+                <span>{company.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-4">
+            <div className="flex items-center gap-3 p-4 bg-white/80 dark:bg-zinc-800/50 rounded-lg border border-amber-200/50 dark:border-amber-800/30">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800 border-2 border-white dark:border-zinc-800" />
+                ))}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-900 dark:text-white">
+                  89% of projects delivered ahead of schedule
+                </p>
+                <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
+                  Based on last quarter's performance data
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Pricing */}
       <section className="py-20 container mx-auto px-4">
