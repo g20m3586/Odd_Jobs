@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
 import { supabase } from "@/lib/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,14 +28,18 @@ export default function ApplicationDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setUserId(user?.id)
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError || !user) {
+          throw new Error(authError?.message || "You must be signed in")
+        }
+        
+        setUserId(user.id)
 
-        // First fetch application with job details
         const { data: appData, error: appError } = await supabase
           .from("applications")
           .select(`
-            id, status, created_at, cover_letter,
+            id, status, created_at, cover_letter, user_id,
             job:jobs(id, title, category, description),
             applicant:profiles!user_id(*),
             business:profiles!business_id(*)
@@ -42,12 +47,24 @@ export default function ApplicationDetailPage() {
           .eq("id", id)
           .single()
 
-        if (appError || !appData) throw appError
+        if (appError || !appData) {
+          throw new Error(appError?.message || "Application not found")
+        }
+
+        if (appData.user_id !== user.id) {
+          throw new Error("You don't have permission to view this application")
+        }
 
         setApplication(appData)
       } catch (err) {
-        toast.error("Could not load application", { description: err.message })
-        router.push("/applications")
+        toast.error("Could not load application", { 
+          description: err.message,
+          action: {
+            label: "Back to Applications",
+            onClick: () => router.push("/dashboard/applications")
+          }
+        })
+        router.push("/dashboard/applications")
       } finally {
         setLoading(false)
       }
