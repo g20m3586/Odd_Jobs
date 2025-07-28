@@ -110,7 +110,7 @@ export default function MyApplicationsPage() {
 
       {applications.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-muted-foreground mb-4">You haven't applied to any jobs yet.</p>
+          <p className="text-muted-foreground mb-4">You haven&apos;t applied to any jobs yet.</p>
           <Button onClick={() => router.push("/dashboard/jobs")}>
             Browse Available Jobs
           </Button>
