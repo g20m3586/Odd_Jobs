@@ -118,7 +118,7 @@ export default function MyJobsPage() {
                 <p className="line-clamp-3 text-muted-foreground">{job.description}</p>
                 <div className="flex flex-wrap gap-2 mt-3 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full">
-                    <DollarSign className="h-3 w-3" /> ${job.price?.toFixed(2)}
+                    <DollarSign className="h-3 w-3" /> {job.price?.toFixed(2)}
                   </span>
                   <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full capitalize">
                     {job.category}
