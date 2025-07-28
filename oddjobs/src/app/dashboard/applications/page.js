@@ -29,7 +29,6 @@ export default function MyApplicationsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("You must be signed in")
 
-        // Fetch applications with both applicant and business info
         const { data, error } = await supabase
           .from("applications")
           .select(`
@@ -42,17 +41,22 @@ export default function MyApplicationsPage() {
           .order("created_at", { ascending: false })
 
         if (error) throw error
-
         setApplications(data)
       } catch (error) {
-        toast.error("Failed to load applications", { description: error.message })
+        toast.error("Failed to load applications", { 
+          description: error.message,
+          action: {
+            label: "Go to Dashboard",
+            onClick: () => router.push("/dashboard")
+          }
+        })
       } finally {
         setLoading(false)
       }
     }
 
     fetchApplications()
-  }, [])
+  }, [router])
 
   const handleWithdraw = async (id) => {
     const confirm = window.confirm("Are you sure you want to withdraw this application?")
@@ -77,31 +81,54 @@ export default function MyApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto py-10">
+      <div className="max-w-5xl mx-auto py-10 space-y-6">
         <Skeleton className="h-10 w-48 mb-4" />
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full mb-4 rounded-md" />
-        ))}
+        <div className="space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="border rounded-md p-4 space-y-3">
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
     <div className="max-w-5xl mx-auto py-10 space-y-6 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-4">My Applications</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">My Applications</h1>
+        <Button variant="outline" onClick={() => router.push("/dashboard")}>
+          Back to Dashboard
+        </Button>
+      </div>
 
       {applications.length === 0 ? (
-        <p className="text-muted-foreground">You haven&apos;t applied to any jobs yet.</p>
+        <div className="text-center py-10">
+          <p className="text-muted-foreground mb-4">You haven't applied to any jobs yet.</p>
+          <Button onClick={() => router.push("/dashboard/jobs")}>
+            Browse Available Jobs
+          </Button>
+        </div>
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
             <div
               key={app.id}
-              className="border rounded-md p-4 bg-muted/50 hover:bg-muted/30 transition"
+              className={`border rounded-md p-4 transition ${
+                ["withdrawn", "rejected"].includes(app.status)
+                  ? "opacity-70 bg-muted/10"
+                  : "bg-muted/50 hover:bg-muted/30"
+              }`}
             >
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <div className="space-y-1">
-                  <Link href={`/applications/${app.id}`}>
+                  <Link href={`/dashboard/applications/${app.id}`}>
                     <h3 className="font-semibold text-lg hover:underline">
                       {app.job?.title}
                     </h3>
@@ -113,10 +140,7 @@ export default function MyApplicationsPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <Badge
-                    variant={statusVariant[app.status] || "secondary"}
-                    className="capitalize"
-                  >
+                  <Badge variant={statusVariant[app.status]} className="capitalize">
                     {app.status}
                   </Badge>
 
@@ -131,6 +155,11 @@ export default function MyApplicationsPage() {
                   )}
                 </div>
               </div>
+              {["withdrawn", "rejected"].includes(app.status) && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  This application is no longer active
+                </p>
+              )}
             </div>
           ))}
         </div>
