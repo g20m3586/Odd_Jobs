@@ -188,11 +188,14 @@ export default function MyItemsPage() {
                 <div className="relative aspect-square overflow-hidden">
                   {item.image_url ? (
                     <Image
-                      src={item.image_url}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                    src={item.image_url}
+                    alt={item.title}
+                    width={300}  // Required
+                    height={300} // Required
+                    className="w-full h-full object-cover"
+                    unoptimized={true} // Bypass Next.js optimization
+                    priority={false}
+                  />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
                       <ImageIcon className="w-8 h-8 text-gray-400" />
