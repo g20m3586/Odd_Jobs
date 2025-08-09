@@ -9,52 +9,29 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Loader2, AlertCircle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState([])
   const [loading, setLoading] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
+  const [showConstructionModal, setShowConstructionModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('businesses')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) throw error
-        setBusinesses(data || [])
-      } catch (error) {
-        console.error('Error fetching businesses:', error)
-        toast.error('Failed to load businesses', {
-          description: error.message
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    const checkAuth = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      if (error || !user) {
-        toast.error('Please sign in to view directory', {
-          action: {
-            label: 'Sign In',
-            onClick: () => router.push('/auth/login')
-          },
-        })
-        router.push('/auth/login')
-        return
-      }
-      setAuthChecked(true)
-      fetchData()
-    }
-
-    if (!authChecked) checkAuth()
-    else fetchData()
-  }, [authChecked, router])
+    // Immediately show construction modal when component mounts
+    setShowConstructionModal(true)
+    
+    // Disable all data fetching
+    setLoading(false)
+    setAuthChecked(true)
+  }, [])
 
   if (loading) {
     return (
@@ -86,10 +63,10 @@ export default function BusinessesPage() {
   }
 
   return (
-    <div className="container py-8 animate-fade-in">
+    <div className="container py-8 animate-fade-in opacity-50 pointer-events-none">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Business Directory</h1>
-        <Button asChild>
+        <Button asChild disabled>
           <Link href="/businesses/register" className="flex items-center gap-2">
             Register Your Business
           </Link>
@@ -103,7 +80,7 @@ export default function BusinessesPage() {
           <p className="text-muted-foreground mb-4">
             Be the first to register your business!
           </p>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" disabled>
             <Link href="/businesses/register">Register Now</Link>
           </Button>
         </div>
@@ -122,7 +99,7 @@ export default function BusinessesPage() {
                 <p className="line-clamp-2 text-muted-foreground mb-4">{business.description}</p>
               </CardContent>
               <CardContent>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full" disabled>
                   <Link href={`/businesses/${business.id}`} className="flex items-center justify-center gap-2">
                     View Details
                   </Link>
@@ -132,6 +109,22 @@ export default function BusinessesPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={showConstructionModal} onOpenChange={setShowConstructionModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Under Construction</DialogTitle>
+            <DialogDescription>
+              This feature is currently under construction and unavailable. Please check back later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => setShowConstructionModal(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
