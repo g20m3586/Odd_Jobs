@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Loader2, X } from "lucide-react"
 import Image from "next/image"
+import { getItemImageUrl, uploadItemImage, deleteItemImage } from '@/lib/images'
 
 const VALID_CONDITIONS = ["new", "like_new", "good", "fair", "poor"]
 const CATEGORIES = ["general", "electronics", "clothing", "books", "furniture", "vehicles", "property"]
@@ -188,28 +189,11 @@ const handleSubmit = async (e) => {
     // Handle image upload if new image was selected
 // In your handleSubmit function, modify the image URL handling:
 if (imageFile) {
-  const ext = imageFile.name.split(".").pop();
-  filePath = `public/${user.id}-${Date.now()}.${ext}`;
-  const uploadToast = toast.loading("Uploading image...");
-
-  try {
-    const { error: uploadError } = await supabase.storage
-      .from("item-images")
-      .upload(filePath, imageFile, {
-        upsert: false,
-        cacheControl: '3600'
-      });
-
-    if (uploadError) throw uploadError;
-
-    // Store just the file path, not full URL
-    newImageUrl = filePath; // Changed from publicUrl to just the path
-  } catch (uploadError) {
-    console.error("Upload error:", uploadError);
-    throw new Error("Failed to upload image. Please try again.");
-  } finally {
-    toast.dismiss(uploadToast);
-  }
+  filePath = await uploadItemImage(imageFile, user.id);
+  newImageUrl = filePath;
+}
+if (newImageUrl && existingItem.image_url) {
+  await deleteItemImage(existingItem.image_url);
 }
 
     // Prepare updates
