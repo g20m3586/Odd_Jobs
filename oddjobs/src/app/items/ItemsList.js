@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { AlertCircle, Tag, DollarSign } from 'lucide-react'
+import { getItemImageUrl } from '@/lib/images'
 
 export default function ItemsList() {
   const [items, setItems] = useState([])
@@ -18,76 +19,33 @@ export default function ItemsList() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const getImageUrl = (path) => {
-    if (!path) return null
-    
-    try {
-      // Handle full URLs (if already formatted)
-      if (path.startsWith('http')) return path
-      
-      // Handle paths that might include the bucket name
-      const cleanPath = path.replace(/^item-images\//, '').replace(/^public\//, '')
-      
-      const { data } = supabase
-        .storage
-        .from('item-images')
-        .getPublicUrl(cleanPath)
-      
-      return data?.publicUrl || null
-    } catch (error) {
-      console.error('Error generating image URL:', error)
-      return null
-    }
-  }
+
 
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('items')
-          .select('*')
-          .order('created_at', { ascending: false })
+const fetchItems = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('items')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-        if (error) throw error
+    if (error) throw error
 
-        const enriched = await Promise.all(
-          data.map(async (item) => {
-            let imageUrl = null
-            if (item.image_url) {
-              imageUrl = getImageUrl(item.image_url)
-              
-              // Optional: Verify the image exists
-              if (imageUrl) {
-                const img = new Image()
-                img.src = imageUrl
-                await new Promise((resolve) => {
-                  img.onload = resolve
-                  img.onerror = () => {
-                    console.warn('Image failed to load:', imageUrl)
-                    imageUrl = null
-                    resolve()
-                  }
-                })
-              }
-            }
-            
-            return {
-              ...item,
-              image_url: imageUrl
-            }
-          })
-        )
+    // Simplify image handling - no need for manual image checking
+    const itemsWithUrls = data.map(item => ({
+      ...item,
+      image_url: item.image_url ? getItemImageUrl(item.image_url) : null
+    }))
 
-        setItems(enriched)
-      } catch (err) {
-        toast.error('Failed to load items', { 
-          description: err.message 
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
+    setItems(itemsWithUrls)
+  } catch (err) {
+    toast.error('Failed to load items', { 
+      description: err.message 
+    })
+  } finally {
+    setLoading(false)
+  }
+}
     fetchItems()
   }, [])
 
@@ -136,18 +94,22 @@ export default function ItemsList() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
       {items.map((item) => (
         <Card key={item.id} className="hover:shadow-md hover:scale-[1.01] transition-all h-full flex flex-col">
-          <CardHeader className="p-4">
-            {item.image_url ? (
-              <img
-                src={item.image_url}
-                alt={item.title}
-                className="w-full h-40 object-cover rounded-md mb-3"
-              />
-            ) : (
-              <div className="w-full h-40 bg-muted rounded-md flex items-center justify-center text-sm text-muted-foreground">
-                No image provided
-              </div>
-            )}
+<CardHeader className="p-4">
+  {item.image_url ? (
+    <img
+      src={item.image_url}
+      alt={item.title}
+      className="w-full h-40 object-cover rounded-md mb-3"
+      onError={(e) => {
+        e.currentTarget.onerror = null
+        e.currentTarget.style.display = 'none'
+      }}
+    />
+  ) : (
+    <div className="w-full h-40 bg-muted rounded-md flex items-center justify-center text-sm text-muted-foreground">
+      No image provided
+    </div>
+  )}
             <CardTitle className="text-lg font-semibold truncate">{item.title}</CardTitle>
             <div className="text-primary font-bold flex items-center gap-1 mt-1">
               <DollarSign className="w-4 h-4" />

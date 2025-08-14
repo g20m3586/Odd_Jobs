@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Loader2, X } from "lucide-react"
 import Image from "next/image"
+import { uploadItemImage } from '@/lib/images'
 
 const VALID_CONDITIONS = ["new", "like_new", "good", "fair", "poor"]
 const DEFAULT_CONDITION = "good"
@@ -173,27 +174,10 @@ function PostItemForm() {
         created_at: new Date().toISOString(),
       }
 
-      if (imageFile) {
-        const ext = imageFile.name.split(".").pop()
-        filePath = `public/${user.id}-${Date.now()}.${ext}`
-        const uploadToast = toast.loading("Uploading image...")
-
-        try {
-          const { error: uploadError } = await supabase.storage
-            .from("item-images")
-            .upload(filePath, imageFile)
-
-          if (uploadError) throw uploadError
-
-          uploadSuccessful = true
-          newItem.image_url = filePath.split('/').pop()
-        } catch (uploadError) {
-          toast.error("Failed to upload image. Please try again or use a different image.")
-          throw uploadError
-        } finally {
-          toast.dismiss(uploadToast)
-        }
-      }
+if (imageFile) {
+  filePath = await uploadItemImage(imageFile, user.id);
+  newItem.image_url = filePath; // Store full path
+}
 
       const insertToast = toast.loading("Creating your listing...")
 
