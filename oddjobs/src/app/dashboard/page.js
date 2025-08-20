@@ -228,7 +228,7 @@ export default function DashboardPage() {
             Welcome back, {profile.name}!
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Here's your snapshot overview.
+            Here&apos;s your snapshot overview.
           </p>
         </div>
         <Button 
