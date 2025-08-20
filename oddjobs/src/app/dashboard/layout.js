@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -106,9 +107,9 @@ export default function DashboardLayout({ children }) {
           flex flex-col border-r border-gray-200 dark:border-gray-700
         `}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <Link href="/dashboard">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
               <span className="text-blue-600">ODD</span>Jobs
             </h2>
           </Link>
@@ -117,7 +118,7 @@ export default function DashboardLayout({ children }) {
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           >
-            <XMarkIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
@@ -130,7 +131,7 @@ export default function DashboardLayout({ children }) {
                 key={href}
                 href={href}
                 className={`
-                  group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg mx-2
+                  group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg mx-1
                   transition-all duration-200
                   ${
                     isActive
@@ -140,7 +141,7 @@ export default function DashboardLayout({ children }) {
               >
                 <Icon
                   className={`
-                    mr-3 flex-shrink-0 h-5 w-5 transition-colors
+                    mr-3 flex-shrink-0 h-4 w-4 sm:h-5 sm:w-5 transition-colors
                     ${
                       isActive
                         ? "text-blue-600 dark:text-blue-400"
@@ -150,7 +151,7 @@ export default function DashboardLayout({ children }) {
                 />
                 <span className="truncate">{name}</span>
                 {isActive && (
-                  <span className="ml-auto h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+                  <span className="ml-auto h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-blue-600 dark:bg-blue-400" />
                 )}
               </Link>
             )
@@ -158,22 +159,22 @@ export default function DashboardLayout({ children }) {
         </nav>
 
         {/* User profile section */}
-        <div className="px-4 py-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="px-3 sm:px-4 py-3 border-t border-gray-100 dark:border-gray-700">
           {loading ? (
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 animate-pulse" />
-              <div className="space-y-2">
-                <div className="h-3 w-24 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
-                <div className="h-2.5 w-32 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 dark:bg-gray-600 animate-pulse" />
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="h-2.5 w-20 sm:w-24 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
+                <div className="h-2 w-24 sm:w-32 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-gray-600 flex items-center justify-center">
-                <UserIcon className="h-5 w-5 text-blue-600 dark:text-gray-300" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-100 dark:bg-gray-600 flex items-center justify-center">
+                <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-gray-300" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
                   {profile?.name || user?.email?.split('@')[0] || 'User'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -194,21 +195,21 @@ export default function DashboardLayout({ children }) {
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar"
           >
-            <Bars3Icon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <Bars3Icon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
           
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[50vw]">
             {navItems.find(item => pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))?.name || 'Dashboard'}
           </h1>
           
           <div className="w-6" /> {/* placeholder for right side */}
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-gray-50 dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto w-full">
             {loading ? (
               <div className="flex justify-center items-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:h-12 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : (
               children

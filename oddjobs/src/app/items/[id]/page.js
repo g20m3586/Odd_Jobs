@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getItemImageUrl } from '@/lib/images'
 
 export default function ItemDetailPage() {
   const { id } = useParams()
