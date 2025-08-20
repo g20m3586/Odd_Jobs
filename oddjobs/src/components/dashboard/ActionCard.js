@@ -8,7 +8,8 @@ export default function ActionCard({
   href, 
   icon,
   actionText = "Get Started",
-  variant = 'default' 
+  variant = 'default',
+  size = 'default' // Add size prop for responsive control
 }) {
   const Icon = icon ? icons[icon] : null
 
@@ -23,18 +24,39 @@ export default function ActionCard({
                        variant === 'success' ? 'success' : 
                        variant === 'warning' ? 'warning' : 'default'
 
+  // Size-based styling
+  const sizeStyles = {
+    sm: {
+      container: 'p-4 sm:p-5',
+      iconContainer: 'p-2 sm:p-3',
+      icon: 'h-4 w-4 sm:h-5 sm:w-5',
+      title: 'text-base sm:text-lg',
+      description: 'text-xs sm:text-sm',
+      button: 'text-xs sm:text-sm'
+    },
+    default: {
+      container: 'p-5 sm:p-6',
+      iconContainer: 'p-3 sm:p-3',
+      icon: 'h-5 w-5',
+      title: 'text-lg font-semibold',
+      description: 'text-sm',
+      button: 'text-sm'
+    }
+  }
+
+  const styles = sizeStyles[size] || sizeStyles.default
+
   return (
-    <div className={`rounded-xl border p-6 ${variantStyles[variant]} transition-all hover:shadow-sm`}>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+    <div className={`rounded-xl border ${variantStyles[variant]} ${styles.container} transition-all hover:shadow-sm`}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         {Icon && (
-          <div className={`p-3 rounded-lg
+          <div className={`rounded-lg ${styles.iconContainer} flex-shrink-0
             ${variant === 'destructive' ? 'bg-red-100 dark:bg-red-900/30' : 
               variant === 'success' ? 'bg-green-100 dark:bg-green-900/30' :
               variant === 'warning' ? 'bg-amber-100 dark:bg-amber-900/30' : 
               'bg-blue-100 dark:bg-blue-900/30'}
-            sm:mb-0 mb-3
           `}>
-            <Icon className={`h-5 w-5
+            <Icon className={`${styles.icon}
               ${variant === 'destructive' ? 'text-red-600 dark:text-red-400' : 
                 variant === 'success' ? 'text-green-600 dark:text-green-400' :
                 variant === 'warning' ? 'text-amber-600 dark:text-amber-400' : 
@@ -42,13 +64,17 @@ export default function ActionCard({
             />
           </div>
         )}
-        <div className="flex-1 max-w-full">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{description}</p>
-          <Button asChild variant={buttonVariant} size="sm">
-            <a href={href} className="flex items-center gap-2" aria-label={`${actionText} for ${title}`}>
+        <div className="flex-1 min-w-0">
+          <h3 className={`${styles.title} text-gray-900 dark:text-white mb-1 sm:mb-2 truncate`}>{title}</h3>
+          <p className={`${styles.description} text-gray-500 dark:text-gray-400 mb-3 sm:mb-4 line-clamp-2`}>{description}</p>
+          <Button 
+            asChild 
+            variant={buttonVariant} 
+            size={size === 'sm' ? 'sm' : 'default'}
+            className={`w-full sm:w-auto ${styles.button}`}
+          >
+            <a href={href} className="flex items-center justify-center sm:justify-start gap-2" aria-label={`${actionText} for ${title}`}>
               {actionText}
-              {Icon && <Icon className="h-4 w-4" />}
             </a>
           </Button>
         </div>

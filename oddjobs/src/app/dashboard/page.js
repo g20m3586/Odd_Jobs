@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from 'next/link'
@@ -7,7 +8,6 @@ import StatCard from "@/components/dashboard/StatCard"
 import ActionCard from "@/components/dashboard/ActionCard"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-// Fix imports at the top:
 import { useRouter } from "next/navigation"
 import { 
   ArrowRight, 
@@ -142,26 +142,24 @@ export default function DashboardPage() {
         0
       ) || 0
 
-const completeFields = [
-  profile.name,
-  profile.email,
-  profile.phone,
-  profile.avatar_url,
-  profile.location,
-  profile.bio,
-  // add any additional fields here
-].filter(Boolean)
+      const completeFields = [
+        profile.name,
+        profile.email,
+        profile.phone,
+        profile.avatar_url,
+        profile.location,
+        profile.bio,
+      ].filter(Boolean)
 
-const totalFields = 7
-const profileComplete = Math.round((completeFields.length / totalFields) * 100)
+      const totalFields = 7
+      const profileComplete = Math.round((completeFields.length / totalFields) * 100)
 
-setStats({
-  jobCount: jobCount || 0,
-  applications: appsRes.count || 0,
-  earnings,
-  profileComplete, // ✅ clean and working
-})
-
+      setStats({
+        jobCount: jobCount || 0,
+        applications: appsRes.count || 0,
+        earnings,
+        profileComplete,
+      })
 
       const { data: recentActivity } = await supabase
         .from("activity_log")
@@ -185,13 +183,25 @@ setStats({
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="space-y-6 animate-pulse">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48 sm:w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <Skeleton className="h-9 w-24" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-36 rounded-xl" />
+            <Skeleton key={i} className="h-28 sm:h-36 rounded-xl" />
           ))}
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {[...Array(2)].map((_, i) => (
+            <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-64 sm:h-72 rounded-xl" />
       </div>
     )
   }
@@ -199,11 +209,11 @@ setStats({
   if (error) {
     return (
       <div className="space-y-4">
-        <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border">
+        <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border text-sm">
           {error}
         </div>
-        <Button onClick={fetchDashboardData}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button onClick={fetchDashboardData} size="sm" className="text-xs sm:text-sm">
+          <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           Retry
         </Button>
       </div>
@@ -211,77 +221,86 @@ setStats({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center flex-wrap gap-4">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex justify-between items-center flex-wrap gap-3 sm:gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
             Welcome back, {profile.name}!
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            Here’s your snapshot overview.
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Here's your snapshot overview.
           </p>
         </div>
-        <Button onClick={fetchDashboardData} variant="outline" className="text-sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
+        <Button 
+          onClick={fetchDashboardData} 
+          variant="outline" 
+          size="sm" 
+          className="text-xs sm:text-sm"
+        >
+          <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
           Refresh
         </Button>
       </div>
 
-{/* Stats */}
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-  {/* Profile Completeness (static) */}
-  
-<Link href="/dashboard/profile" className="block">
-  <StatCard
-    title="Profile Completeness"
-    value={`${stats.profileComplete}%`}
-    icon="User"
-    trend={
-      stats.profileComplete > 80 ? "up" : stats.profileComplete > 50 ? "neutral" : "down"
-    }
-    variant={
-      stats.profileComplete < 50
-        ? "destructive"
-        : stats.profileComplete < 80
-        ? "warning"
-        : "success"
-    }
-  />
-</Link>
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        {/* Profile Completeness */}
+        <Link href="/dashboard/profile" className="block">
+          <StatCard
+            title="Profile"
+            value={`${stats.profileComplete}%`}
+            subtitle="Complete"
+            icon="User"
+            trend={
+              stats.profileComplete > 80 ? "up" : stats.profileComplete > 50 ? "neutral" : "down"
+            }
+            variant={
+              stats.profileComplete < 50
+                ? "destructive"
+                : stats.profileComplete < 80
+                ? "warning"
+                : "success"
+            }
+            size="sm"
+          />
+        </Link>
 
-  {/* My Jobs (clickable) */}
-  <Link href="/dashboard/my-jobs" className="block">
-    <StatCard
-      title="My Jobs"
-      value={stats.jobCount}
-      subtitle="Open Listings"
-      icon="Briefcase"
-      trend="up"
-    />
-  </Link>
+        {/* My Jobs */}
+        <Link href="/dashboard/my-jobs" className="block">
+          <StatCard
+            title="My Jobs"
+            value={stats.jobCount}
+            subtitle="Listings"
+            icon="Briefcase"
+            trend="up"
+            size="sm"
+          />
+        </Link>
 
-  {/* Applications (clickable) */}
-  <Link href="/dashboard/applications" className="block">
-    <StatCard
-      title="Applications"
-      value={stats.applications}
-      subtitle={profile.role === "business" ? "Received" : "Submitted"}
-      icon="Inbox"
-      trend="up"
-    />
-  </Link>
+        {/* Applications */}
+        <Link href="/dashboard/applications" className="block">
+          <StatCard
+            title="Applications"
+            value={stats.applications}
+            subtitle={profile.role === "business" ? "Received" : "Submitted"}
+            icon="Inbox"
+            trend="up"
+            size="sm"
+          />
+        </Link>
 
-  {/* Earnings (static) */}
-  <StatCard
-    title="Earnings"
-    value={`$${stats.earnings.toFixed(2)}`}
-    icon="DollarSign"
-    trend="up"
-  />
-</div>
+        {/* Earnings */}
+        <StatCard
+          title="Earnings"
+          value={`$${stats.earnings.toFixed(2)}`}
+          icon="DollarSign"
+          trend="up"
+          size="sm"
+        />
+      </div>
 
       {/* Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <ActionCard
           title="Complete Your Profile"
           description="Complete your setup to get better visibility"
@@ -294,6 +313,7 @@ setStats({
               ? "warning"
               : "success"
           }
+          size="sm"
         />
         <ActionCard
           title={profile.role === "business" ? "Post a New Job" : "Find Jobs"}
@@ -304,61 +324,61 @@ setStats({
           }
           href={profile.role === "business" ? "/jobs/post" : "/jobs"}
           icon={profile.role === "business" ? "Plus" : "Search"}
+          size="sm"
         />
       </div>
 
-
-
-{/* Activity */}
-<section className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-6">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
-    <Button 
-      variant="ghost" 
-      className="text-blue-600 dark:text-blue-400"
-      onClick={() => router.push('/dashboard/activity')}
-    >
-      View All <ArrowRight className="ml-2 h-4 w-4" />
-    </Button>
-  </div>
-  <div className="space-y-4">
-    {activities.length === 0 ? (
-      <p className="text-sm text-muted-foreground">No recent activity</p>
-    ) : (
-      activities.map((activity) => {
-        const typeInfo = activityTypeMap[activity.type] || activityTypeMap.default
-        const Icon = typeInfo.icon
-        const timeAgo = timeAgoFromNow(activity.created_at)
-
-        return (
-          <Link 
-            key={activity.id} 
-            href={`/dashboard/activity/${activity.id}`}
-            className="block hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2 transition-colors"
+      {/* Activity */}
+      <section className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm"
+            onClick={() => router.push('/dashboard/activity')}
           >
-            <div className="flex items-start gap-4">
-              <div className={`${typeInfo.bgColor} p-2 rounded-lg`}>
-                <Icon className={`h-5 w-5 ${typeInfo.iconColor}`} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {activity.description || typeInfo.label}
-                </p>
-                <p className="text-sm text-muted-foreground">{timeAgo}</p>
-                {activity.metadata && (
-                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {JSON.stringify(activity.metadata)}
+            View All <ArrowRight className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
+        </div>
+        <div className="space-y-3 sm:space-y-4">
+          {activities.length === 0 ? (
+            <p className="text-xs sm:text-sm text-muted-foreground">No recent activity</p>
+          ) : (
+            activities.map((activity) => {
+              const typeInfo = activityTypeMap[activity.type] || activityTypeMap.default
+              const Icon = typeInfo.icon
+              const timeAgo = timeAgoFromNow(activity.created_at)
+
+              return (
+                <Link 
+                  key={activity.id} 
+                  href={`/dashboard/activity/${activity.id}`}
+                  className="block hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 -m-2 transition-colors"
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className={`${typeInfo.bgColor} p-1.5 sm:p-2 rounded-lg flex-shrink-0`}>
+                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${typeInfo.iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {activity.description || typeInfo.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                      {activity.metadata && (
+                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {JSON.stringify(activity.metadata)}
+                        </div>
+                      )}
+                    </div>
+                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
                   </div>
-                )}
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            </div>
-          </Link>
-        )
-      })
-    )}
-  </div>
-</section>
+                </Link>
+              )
+            })
+          )}
+        </div>
+      </section>
     </div>
   )
 }
